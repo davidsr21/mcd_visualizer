@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/plugins/mcd_visualizer" >
+        <file>icon.png</file>
+    </qresource>
+</RCC>
