@@ -51,13 +51,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
         self.cambio_epoca(self.Combo_Epoca.currentText())
         self.toggle_altitude(self.Combo_Variable.currentText())
 
-        self._raster_counter = 0 # Para modificar el nombre del raster y poder plotear varios simultaneamente
-
     def cambio_epoca(self, epoca):
-        """
-        Rellena Combo_Archivo en función de la
-        epoca seleccionada por el usuario
-        """
+
         carpeta = self.lista_carpetas.get(epoca)
 
         self.Combo_Archivo.clear()
@@ -76,10 +71,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
         self.Combo_Archivo.addItems(archivos)
 
     def cambio_archivo(self, archivo_nombre):
-        """
-        Cuando se selecciona un archivo en Combo_Archivo, abre ese archivo .nc
-        y rellena los demas Combo_Variable, Hora, Altitud...
-        """
+
         if not archivo_nombre:
             return
 
@@ -126,12 +118,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
         self.Combo_Altitud.setToolTip("Esta variable no tiene dimensión 'altitude'")
 
     def visualizar_variable(self):
-        """
-        Lee los valores seleccionados en la GUI y:
-          - usa currentIndex() para Time y Altitude
-          - hace recorte espacial SOLO si lat/lon != "ALL"
-          - llama a _mostrar_raster
-        """
 
         var = self.Combo_Variable.currentText()
         hora = self.Combo_Hora.currentIndex()
@@ -178,21 +164,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
         self._mostrar_raster(array, lats, lons, var)
 
     def _mostrar_raster(self, array, lat, lon, nombre):
-        """
-        1) Crea un GeoTIFF único en temp con GDAL (EPSG:4326)
-        2) Carga el layer en QGIS
-        3) Calcula min/max reales de la banda
-        4) Aplica pseudocolor Turbo, interpolación lineal,
-           modo CONTINUOUS y fija min/max en el renderer
-        5) Añade la capa y refresca canvas + simbología
-        """
-        # 1) Validar 2D
+
         arr = np.asarray(array)
         if arr.ndim != 2:
             QMessageBox.warning(self, "No es un mapa 2D", "…")
             return
 
-        # 2) Nombre único en temp
         temp_dir = tempfile.gettempdir()
         filename = f"{nombre}_{uuid.uuid4().hex}.tif"
         path = os.path.join(temp_dir, filename)
@@ -211,14 +188,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
         ds.FlushCache();
         ds = None
 
-        # 4) Cargar layer
         layer = QgsRasterLayer(path, nombre)
         if not layer.isValid():
             QMessageBox.critical(self, "Error", "No se pudo cargar el raster.")
             return
         provider = layer.dataProvider()
 
-        # 5) Aplicar pseudocolor continuo Turbo + interpolación lineal
         ramp = QgsStyle().defaultStyle().colorRamp('Turbo')
         renderer = QgsSingleBandPseudoColorRenderer(provider, 1)
         renderer.createShader(
@@ -229,14 +204,11 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
         )
         layer.setRenderer(renderer)
 
-        # 6) Ajustar opacidad al 70%
         layer.setOpacity(0.7)
 
-        # 7) Añadir y repintar
         QgsProject.instance().addMapLayer(layer)
         layer.triggerRepaint()
 
-        # 8) Abrir diálogo de Simbología y forzar “Aplicar”+cierre
         iface.showLayerProperties(layer, 'symbology')
         for w in QApplication.topLevelWidgets():
             if isinstance(w, QDialog) and w.windowTitle().startswith("Propiedades de capa"):
