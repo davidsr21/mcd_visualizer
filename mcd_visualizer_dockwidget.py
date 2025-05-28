@@ -170,6 +170,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
             QMessageBox.warning(self, "No es un mapa 2D", "…")
             return
 
+        arr = np.flipud(arr)
+
         temp_dir = tempfile.gettempdir()
         filename = f"{nombre}_{uuid.uuid4().hex}.tif"
         path = os.path.join(temp_dir, filename)
@@ -180,7 +182,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
         yres = (lat[-1] - lat[0]) / nrows
         drv = gdal.GetDriverByName("GTiff")
         ds = drv.Create(path, ncols, nrows, 1, gdal.GDT_Float32)
-        ds.SetGeoTransform((lon[0], xres, 0, lat[0], 0, -yres))
+        ds.SetGeoTransform((lon[0], xres, 0, lat[-1], 0, -yres))
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(4326)
         ds.SetProjection(srs.ExportToWkt())
@@ -196,15 +198,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
 
         ramp = QgsStyle().defaultStyle().colorRamp('Turbo')
         renderer = QgsSingleBandPseudoColorRenderer(provider, 1)
-        renderer.createShader(
-            ramp,
-            Qgis.ShaderInterpolationMethod.Linear,
-            Qgis.ShaderClassificationMethod.Continuous,
-            0
-        )
+        renderer.createShader(ramp, Qgis.ShaderInterpolationMethod.Linear, Qgis.ShaderClassificationMethod.Continuous, 0)
         layer.setRenderer(renderer)
 
-        layer.setOpacity(0.7)
+        layer.setOpacity(0.9)
 
         QgsProject.instance().addMapLayer(layer)
         layer.triggerRepaint()
