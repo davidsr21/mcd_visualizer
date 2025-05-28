@@ -181,11 +181,11 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS): # Empieza clas
         drv = gdal.GetDriverByName("GTiff")
         ds = drv.Create(path, ncols, nrows, 1, gdal.GDT_Float32)
         ds.SetGeoTransform((lon[0], xres, 0, lat[0], 0, -yres))
-        srs = osr.SpatialReference();
+        srs = osr.SpatialReference()
         srs.ImportFromEPSG(4326)
         ds.SetProjection(srs.ExportToWkt())
         ds.GetRasterBand(1).WriteArray(arr)
-        ds.FlushCache();
+        ds.FlushCache()
         ds = None
 
         layer = QgsRasterLayer(path, nombre)
