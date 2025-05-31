@@ -27,7 +27,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.setupUi(self)
 
         # Base path  where NETCDF and MOLA data store (To be changed soon)
-        self.ruta = r"C:\Users\lucia\Desktop\David\TFM\00_MCD_6.1\data"
+        self.ruta = r"C:\MCD6.1\data"
         # Dictionary mapping human-readable era names to actual folder names
         self.lista_carpetas = {
             "Promedio Anual": "clim_aveEUV",
