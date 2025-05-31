@@ -218,7 +218,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.mola_loaded = False
 
         #Path to original MOLA GeoTIFF
-        origen = os.path.join(self.ruta, "mola32_isolines.tif")
+        plugin_dir = os.path.dirname(__file__)
+        origen = os.path.join(plugin_dir, "mola32_isolines.tif")
         #Spatial crop if full map not checked on GUI
         if not self.Check_Mapa.isChecked():
             lon_min = float(self.Combo_Longitud_Min.currentText())
