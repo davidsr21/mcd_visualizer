@@ -7,7 +7,7 @@ import uuid
 import processing
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, Qt
-from qgis.core import QgsProject,QgsRasterLayer,QgsRasterContourRenderer,QgsLineSymbol,QgsSingleBandPseudoColorRenderer,QgsStyle,Qgis, QgsVectorLayer
+from qgis.core import QgsProject,QgsRasterLayer, QgsLineSymbol,QgsSingleBandPseudoColorRenderer,QgsStyle,Qgis, QgsVectorLayer
 from osgeo import gdal, osr
 from PyQt5.QtWidgets import QMessageBox, QApplication, QDialog, QDialogButtonBox, QProgressDialog
 from qgis.utils import iface
@@ -49,24 +49,29 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "Año Marciano 35": "MY35",
         }
 
-        #Connect Combo_Box signals to their respective handlers
+        # 1) Poblar el combo de épocas
+        self.Combo_Epoca.clear()
+        self.Combo_Epoca.addItems(list(self.lista_carpetas.keys()))
+        self.Combo_Epoca.setCurrentIndex(0)
+
+        # 2) Llamar a cambio_epoca con la época inicial
+        self.cambio_epoca(self.Combo_Epoca.currentText())
+
+        # 3) Ahora Combo_Archivo ya tiene items: seleccionar el primero y forzar cambio_archivo
+        if self.Combo_Archivo.count() > 0:
+            self.Combo_Archivo.setCurrentIndex(0)
+            self.cambio_archivo(self.Combo_Archivo.currentText())
+
+        # 4)Combo_Variable ya está poblado; habilitamos o deshabilitamos Combo_Altitud
+        self.toggle_altitude(self.Combo_Variable.currentText())
+
+        # 5) Conectar signals restantes
         self.Combo_Archivo.currentTextChanged.connect(self.cambio_archivo)
         self.Combo_Epoca.currentTextChanged.connect(self.cambio_epoca)
         self.Combo_Variable.currentTextChanged.connect(self.toggle_altitude)
-
-        #Flag to track if MOLA layer is loaded (Currently unused)
-        self.mola_loaded = False
-
-        #Connect the visualize button to the visualization handler
-        self.Push_Visualizar.clicked.connect(self.visualizar_variable)
-
-        #Initialize Combo_Boxes based on the default selection
-        self.cambio_epoca(self.Combo_Epoca.currentText())
-        self.toggle_altitude(self.Combo_Variable.currentText())
-
         self.Check_Mapa.stateChanged.connect(self.toggle_map_latlon_mode)
         self.toggle_map_latlon_mode(self.Check_Mapa.checkState())
-
+        self.Push_Visualizar.clicked.connect(self.visualizar_variable)
         self.Push_Reset.clicked.connect(self.reset_all)
 
     def cambio_epoca(self, epoca):
@@ -82,7 +87,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         folder = os.path.join(self.ruta, carpeta)
 
         try:
-            arcvhivos = sorted(f for f in os.listdir(folder) if f.endswith("_me.nc"))
+            archivos = sorted(f for f in os.listdir(folder) if f.endswith("_me.nc"))
         except FileNotFoundError:
             QMessageBox.warning(self, "Error", "Folder not found")
             return
@@ -94,6 +99,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             if len(archivos) > 0:
                 self.Combo_Archivo.setCurrentIndex(0)
+
+                first = self.Combo_Archivo.currentText()
+                self.cambio_archivo(first)
 
     def cambio_archivo(self, archivo_nombre):
         #Handler for when the file combo changes: Load the dataset and populate other combos
@@ -110,11 +118,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         path = os.path.join(self.ruta, carpeta, archivo_nombre)
 
         try:
-            self.ds = xr.open_dataset(path, decode_times=false)
+            self.ds = xr.open_dataset(path, decode_times=False)
         except Exception as e:
             QMessageBox.critical(self, "Error at opening NetCDF file", str(e))
+            return
 
-        prev_var = self.Combo_variable.currentText()
+        prev_var = self.Combo_Variable.currentText()
         prev_hora = self.Combo_Hora.currentText()
         prev_altitud = self.Combo_Altitud.currentText()
         prev_lat_min = self.Combo_Latitud_Min.currentText()
@@ -124,7 +133,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         new_vars = list(self.ds.data_vars.keys())
         self.Combo_Variable.clear()
-        self.Combo_Variable_addItems(new_vars)
+        self.Combo_Variable.addItems(new_vars)
 
         if prev_var in new_vars:
             self.Combo_Variable.setCurrentText(prev_var)
@@ -155,7 +164,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Altitud.setToolTip("")
         else:
             self.Combo_Altitud.clear()
-            self.Combo_Altitud.clear()
             self.Combo_Altitud.setEnabled(False)
             self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
             self.Combo_Altitud.setToolTip("This variable has no altitude dimension")
@@ -172,7 +180,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if len(lat_vals) > 0:
                 self.Combo_Latitud_Min.setCurrentIndex(0)
         if prev_lat_max in lat_vals:
-            self.Combo_Latitud_Max.setCurrentTex(prev_lat_max)
+            self.Combo_Latitud_Max.setCurrentText(prev_lat_max)
         else:
             if len(lat_vals) > 0:
                 self.Combo_Latitud_Max.setCurrentIndex(0)
@@ -189,7 +197,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if len(lon_vals) > 0:
                 self.Combo_Longitud_Min.setCurrentIndex(0)
         if prev_lon_max in lon_vals:
-            self.Combo_Longitud_Max.setCurrentTex(prev_lon_max)
+            self.Combo_Longitud_Max.setCurrentText(prev_lon_max)
         else:
             if len(lon_vals) > 0:
                 self.Combo_Longitud_Max.setCurrentIndex(0)

@@ -311,7 +311,7 @@
    <widget class="QComboBox" name="Combo_Variable">
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>220</x>
       <y>500</y>
       <width>171</width>
       <height>20</height>
@@ -326,7 +326,7 @@
    <widget class="QPushButton" name="Push_Visualizar">
     <property name="geometry">
      <rect>
-      <x>210</x>
+      <x>200</x>
       <y>560</y>
       <width>211</width>
       <height>61</height>
@@ -439,13 +439,13 @@
      <string>Archivo</string>
     </property>
    </widget>
-   <widget class="QRadioButton" name="Push_Reset">
+   <widget class="QPushButton" name="Push_Reset">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>20</y>
-      <width>82</width>
-      <height>17</height>
+      <x>20</x>
+      <y>10</y>
+      <width>111</width>
+      <height>41</height>
      </rect>
     </property>
     <property name="font">
@@ -454,7 +454,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Reset</string>
+     <string>RESET</string>
     </property>
    </widget>
   </widget>
