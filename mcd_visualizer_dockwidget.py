@@ -27,7 +27,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         super(MCDVisualizerDockWidget, self).__init__(parent)
         self.setupUi(self)
 
-        # Base path  where NETCDF and MOLA data store (To be changed soon)
+        # Base path  where NETCDF and MOLA data store
         self.ruta = r"C:\MCD6.1\data"
         # Dictionary mapping human-readable era names to actual folder names
         self.lista_carpetas = {
@@ -49,30 +49,21 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "Año Marciano 35": "MY35",
         }
 
-        # 1) Poblar el combo de épocas
         self.Combo_Epoca.clear()
         self.Combo_Epoca.addItems(list(self.lista_carpetas.keys()))
         self.Combo_Epoca.setCurrentIndex(0)
-
-        # 2) Llamar a cambio_epoca con la época inicial
         self.cambio_epoca(self.Combo_Epoca.currentText())
 
-        # 3) Ahora Combo_Archivo ya tiene items: seleccionar el primero y forzar cambio_archivo
-        if self.Combo_Archivo.count() > 0:
-            self.Combo_Archivo.setCurrentIndex(0)
-            self.cambio_archivo(self.Combo_Archivo.currentText())
-
-        # 4)Combo_Variable ya está poblado; habilitamos o deshabilitamos Combo_Altitud
-        self.toggle_altitude(self.Combo_Variable.currentText())
-
-        # 5) Conectar signals restantes
-        self.Combo_Archivo.currentTextChanged.connect(self.cambio_archivo)
         self.Combo_Epoca.currentTextChanged.connect(self.cambio_epoca)
-        self.Combo_Variable.currentTextChanged.connect(self.toggle_altitude)
+        self.Combo_Archivo.currentTextChanged.connect(self.cambio_archivo)
+
+        self.Combo_Variable.itemSelectionChanged.connect(self.toggle_altitude_multi)
         self.Check_Mapa.stateChanged.connect(self.toggle_map_latlon_mode)
-        self.toggle_map_latlon_mode(self.Check_Mapa.checkState())
         self.Push_Visualizar.clicked.connect(self.visualizar_variable)
         self.Push_Reset.clicked.connect(self.reset_all)
+
+
+        self.toggle_map_latlon_mode(self.Check_Mapa.checkState())
 
     def cambio_epoca(self, epoca):
         #Handler for when the era combo changes: populate the file list
@@ -96,51 +87,50 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         if prev_archivo in archivos:
             self.Combo_Archivo.setCurrentText(prev_archivo)
+            self.cambio_archivo(prev_archivo)
         else:
             if len(archivos) > 0:
                 self.Combo_Archivo.setCurrentIndex(0)
-
                 first = self.Combo_Archivo.currentText()
                 self.cambio_archivo(first)
 
     def cambio_archivo(self, archivo_nombre):
-        #Handler for when the file combo changes: Load the dataset and populate other combos
-
         if not archivo_nombre:
             return
 
         epoca_label = self.Combo_Epoca.currentText()
         carpeta = self.lista_carpetas.get(epoca_label)
-
         if not carpeta:
             return
 
         path = os.path.join(self.ruta, carpeta, archivo_nombre)
-
         try:
-            self.ds = xr.open_dataset(path, decode_times=False)
+            ds_nuevo = xr.open_dataset(path, decode_times=False)
         except Exception as e:
-            QMessageBox.critical(self, "Error at opening NetCDF file", str(e))
+            QMessageBox.critical(self, "Error al abrir NetCDF", str(e))
             return
 
-        prev_var = self.Combo_Variable.currentText()
-        prev_hora = self.Combo_Hora.currentText()
-        prev_altitud = self.Combo_Altitud.currentText()
-        prev_lat_min = self.Combo_Latitud_Min.currentText()
-        prev_lat_max = self.Combo_Latitud_Max.currentText()
-        prev_lon_min = self.Combo_Longitud_Min.currentText()
-        prev_lon_max = self.Combo_Longitud_Max.currentText()
+        self.ds = ds_nuevo
 
-        new_vars = list(self.ds.data_vars.keys())
+        prev_alt = self.Combo_Altitud.currentText()
+
+        prev_vars = [item.text() for item in self.Combo_Variable.selectedItems()]
         self.Combo_Variable.clear()
-        self.Combo_Variable.addItems(new_vars)
+        for varname in self.ds.data_vars.keys():
+            item = QtWidgets.QListWidgetItem(varname)
+            self.Combo_Variable.addItem(item)
 
-        if prev_var in new_vars:
-            self.Combo_Variable.setCurrentText(prev_var)
-        else:
-            if len(new_vars) > 0:
-                self.Combo_Variable.setCurrentIndex(0)
+        for i in range(self.Combo_Variable.count()):
+            itm = self.Combo_Variable.item(i)
+            if itm.text() in prev_vars:
+                itm.setSelected(True)
 
+        if not self.Combo_Variable.selectedItems() and self.Combo_Variable.count() > 0:
+            self.Combo_Variable.item(0).setSelected(True)
+
+        self.toggle_altitude_multi()
+
+        prev_hora = self.Combo_Hora.currentText()
         time_vals = [str(int(t)) for t in self.ds.Time.values]
         self.Combo_Hora.clear()
         self.Combo_Hora.addItems(time_vals)
@@ -150,30 +140,35 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if len(time_vals) > 0:
                 self.Combo_Hora.setCurrentIndex(0)
 
-        if "altitude" in self.ds[self.Combo_Variable.currentText()].dims:
+        if "altitude" in self.ds.coords or "altitude" in self.ds.dims:
             alt_vals = [f"{a:.4f}" for a in self.ds.altitude.values]
+
             self.Combo_Altitud.clear()
             self.Combo_Altitud.addItems(alt_vals)
-            if prev_altitud in alt_vals:
-                self.Combo_Altitud.setCurrentText(prev_altitud)
+            if prev_alt in alt_vals:
+                self.Combo_Altitud.setCurrentText(prev_alt)
             else:
                 if len(alt_vals) > 0:
                     self.Combo_Altitud.setCurrentIndex(0)
+
             self.Combo_Altitud.setEnabled(True)
             self.Combo_Altitud.setStyleSheet("")
             self.Combo_Altitud.setToolTip("")
         else:
-            self.Combo_Altitud.clear()
             self.Combo_Altitud.setEnabled(False)
             self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-            self.Combo_Altitud.setToolTip("This variable has no altitude dimension")
+            self.Combo_Altitud.setToolTip("El NetCDF no contiene dimensión 'altitude'")
+
+        prev_lat_min = self.Combo_Latitud_Min.currentText()
+        prev_lat_max = self.Combo_Latitud_Max.currentText()
+        prev_lon_min = self.Combo_Longitud_Min.currentText()
+        prev_lon_max = self.Combo_Longitud_Max.currentText()
 
         lat_vals = [f"{lat:.4f}" for lat in self.ds.latitude.values]
         self.Combo_Latitud_Min.clear()
         self.Combo_Latitud_Max.clear()
         self.Combo_Latitud_Min.addItems(lat_vals)
         self.Combo_Latitud_Max.addItems(lat_vals)
-
         if prev_lat_min in lat_vals:
             self.Combo_Latitud_Min.setCurrentText(prev_lat_min)
         else:
@@ -190,7 +185,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Longitud_Max.clear()
         self.Combo_Longitud_Min.addItems(lon_vals)
         self.Combo_Longitud_Max.addItems(lon_vals)
-
         if prev_lon_min in lon_vals:
             self.Combo_Longitud_Min.setCurrentText(prev_lon_min)
         else:
@@ -202,18 +196,30 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if len(lon_vals) > 0:
                 self.Combo_Longitud_Max.setCurrentIndex(0)
 
+    def toggle_altitude_multi(self):
+        vars_marcadas = [item.text() for item in self.Combo_Variable.selectedItems()]
 
-    def toggle_altitude(self, var_name):
-        # Enable or disable altitude combo based on presence of altitude dimension
-        if hasattr(self, 'ds') and var_name in self.ds.data_vars:
-            da = self.ds[var_name]
-            if "altitude" in da.dims:
-                self.Combo_Altitud.setEnabled(True)
-                return
-        # disable and style the combo red if no altitude dimension
-        self.Combo_Altitud.setEnabled(False)
-        self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-        self.Combo_Altitud.setToolTip("This variable has no altitude dimension")
+        if len(vars_marcadas) == 0:
+            self.Combo_Altitud.setEnabled(False)
+            self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
+            self.Combo_Altitud.setToolTip("Marca al menos una variable")
+            return
+
+        if len(vars_marcadas) > 1:
+            self.Combo_Altitud.setEnabled(True)
+            self.Combo_Altitud.setStyleSheet("")
+            self.Combo_Altitud.setToolTip("")
+            return
+
+        var_unica = vars_marcadas[0]
+        if var_unica in self.ds.data_vars and "altitude" in self.ds[var_unica].dims:
+            self.Combo_Altitud.setEnabled(True)
+            self.Combo_Altitud.setStyleSheet("")
+            self.Combo_Altitud.setToolTip("")
+        else:
+            self.Combo_Altitud.setEnabled(False)
+            self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
+            self.Combo_Altitud.setToolTip("La variable única no contiene dimensión 'altitude'")
 
     def toggle_map_latlon_mode(self, estado):
 
@@ -225,31 +231,28 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             for combo in combos:
                 combo.setEnabled(False)
                 combo.setStyleSheet("QComboBox { background-color: red; }")
+                combo.setToolTip("Latitude/Longitude Selector is disabled when full map is selected")
         else:
             for combo in combos:
                 combo.setEnabled(True)
                 combo.setStyleSheet("")
 
     def reset_all(self):
-
-        if self.Combo_Epoca.count() > 0:
-            self.Combo_Epoca.setCurrentIndex(0)
-        else:
-            return
-
-        self.cambio_epoca(self.Combo_Epoca.currentText())
+        self.Combo_Epoca.setCurrentIndex(0)
 
         if self.Combo_Archivo.count() > 0:
             self.Combo_Archivo.setCurrentIndex(0)
-        else:
-            return
 
         if self.Combo_Variable.count() > 0:
-            self.Combo_Variable.setCurrentIndex(0)
+            for i in range(self.Combo_Variable.count()):
+                self.Combo_Variable.item(i).setSelected(False)
+
         if self.Combo_Hora.count() > 0:
             self.Combo_Hora.setCurrentIndex(0)
+
         if self.Combo_Altitud.isEnabled() and self.Combo_Altitud.count() > 0:
             self.Combo_Altitud.setCurrentIndex(0)
+
         if self.Combo_Latitud_Min.count() > 0:
             self.Combo_Latitud_Min.setCurrentIndex(0)
         if self.Combo_Latitud_Max.count() > 0:
@@ -270,68 +273,71 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #Validate ranges if not showing full map
         if not self.Check_Mapa.isChecked():
             if lat_min >= lat_max:
-                QMessageBox.warning(self, "Rango de latitudes inválido",
-                                    "La latitud mínima debe ser menor que la máxima.")
+                QMessageBox.warning(self, "Invalid latitude range",
+                                    "Min latitude must be lower than max latitude")
                 return
             if lon_min >= lon_max:
-                QMessageBox.warning(self, "Rango de longitudes inválido",
-                                    "La longitud mínima debe ser menor que la máxima.")
+                QMessageBox.warning(self, "Invalid longitude range",
+                                    "Min longitude must be lower than max longitude")
                 return
 
-        #Extract DataArray for selected variable
-        da = self.ds[self.Combo_Variable.currentText()]
+        vars_sel = [item.text() for item in self.Combo_Variable.selectedItems()]
 
-        #Selec time index if Time Dimension
-        if "Time" in da.dims:
-            da = da.isel(Time=self.Combo_Hora.currentIndex())
-        # Select altitude index if altitude dimension enabled
-        if "altitude" in da.dims and self.Combo_Altitud.isEnabled():
-            da = da.isel(altitude=self.Combo_Altitud.currentIndex())
-
-        #Spacial slice if not full map
-        if not self.Check_Mapa.isChecked():
-            lat_vals = self.ds.latitude.values
-            #Determine correct slice based on coordinate order
-            if lat_vals[0] < lat_vals[-1]:
-                lat_slice = slice(lat_min, lat_max)
-            else:
-                lat_slice = slice(lat_max, lat_min)
-
-            lon_vals = self.ds.longitude.values
-            if lon_vals[0] < lon_vals[-1]:
-                lon_slice = slice(lon_min, lon_max)
-            else:
-                lon_slice = slice(lon_max, lon_min)
-
-            #Apply .sel for labeled slicing
-            da = da.sel(latitude=lat_slice, longitude=lon_slice)
-
-        # Extract sliced coordinates and values
-        lats = da.latitude.values
-        lons = da.longitude.values
-        array = da.values
-
-        #Warn if no data (empty data array)
-        if array.size == 0:
-            QMessageBox.warning(self, "Sin datos","El recorte seleccionado no contiene datos.")
+        if not vars_sel:
+            QMessageBox.warning(self, "No variables", "You must select at least one variable")
             return
 
-        # Show progress bar while mola and map are being generated
-        dlg = QProgressDialog("Processing Files…", None, 0, 0, self)
+        dlg = QProgressDialog("Generating raster layers...", None, 0, len(vars_sel), self)
         dlg.setWindowModality(Qt.WindowModal)
-        dlg.setCancelButton(None)  # No cancel button
-        dlg.setMinimumDuration(0)  # Appear rightaway
+        dlg.setCancelButton(None)
+        dlg.setMinimumDuration(0)
         dlg.setWindowTitle("Please, wait")
         dlg.show()
-        QApplication.processEvents()  # To draw the progress bar
 
         try:
-            #Display the raster
-            self._mostrar_raster(array, lats, lons, self.Combo_Variable.currentText())
-            #Load mola contours on top
+            for idx, varname in enumerate(vars_sel):
+                da = self.ds[varname]
+
+                if "Time" in da.dims:
+                    da = da.isel(Time = self.Combo_Hora.currentIndex())
+
+                if "altitude" in da.dims and self.Combo_Altitud.isEnabled():
+                    da = da.isel(altitude = self.Combo_Altitud.currentIndex())
+
+                if not self.Check_Mapa.isChecked():
+                    lat_vals = self.ds.latitude.values
+                    if lat_vals[0] < lat_vals[-1]:
+                        lat_slice = slice(lat_min, lat_max)
+                    else:
+                        lat_slice = slice(lat_max, lat_min)
+
+                    lon_vals = self.ds.longitude.values
+                    if lon_vals[0] < lon_vals[-1]:
+                        lon_slice = slice(lon_min, lon_max)
+                    else:
+                        lon_slice = slice(lon_max, lon_min)
+
+                    da = da.sel(latitude = lat_slice, longitude = lon_slice)
+
+                lats = da.latitude.values
+                lons = da.longitude.values
+                array = da.values
+
+                if array.size == 0:
+                    QMessageBox.warning(self, "No data", f"Variable {varname} has no data in the lat/lon cut.")
+                    dlg.setValue(idx + 1)
+                    QApplication.processEvents()
+                    continue
+
+                layer_name = varname
+                self._mostrar_raster(array, lats, lons, layer_name)
+
+                dlg.setValue(idx + 1)
+                QApplication.processEvents()
+
             self.loadMolaBase()
+
         finally:
-            #Close progress bar when images are ploted
             dlg.close()
 
     def loadMolaBase(self):

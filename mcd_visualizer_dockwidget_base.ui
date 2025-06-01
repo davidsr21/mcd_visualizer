@@ -6,15 +6,24 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>648</width>
-    <height>654</height>
+    <width>396</width>
+    <height>950</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>648</width>
-    <height>467</height>
+    <width>396</width>
+    <height>150</height>
    </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>396</width>
+    <height>950</height>
+   </size>
+  </property>
+  <property name="layoutDirection">
+   <enum>Qt::LeftToRight</enum>
   </property>
   <property name="windowTitle">
    <string>MCD_Visualizer</string>
@@ -23,8 +32,8 @@
    <widget class="QLabel" name="Label_Epoca">
     <property name="geometry">
      <rect>
-      <x>170</x>
-      <y>50</y>
+      <x>60</x>
+      <y>60</y>
       <width>71</width>
       <height>21</height>
      </rect>
@@ -42,8 +51,8 @@
    <widget class="QComboBox" name="Combo_Epoca">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>80</y>
+      <x>20</x>
+      <y>90</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -137,8 +146,8 @@
    <widget class="QComboBox" name="Combo_Archivo">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>80</y>
+      <x>230</x>
+      <y>90</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -152,8 +161,8 @@
    <widget class="QLabel" name="Label_Hora_Local">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>150</y>
+      <x>40</x>
+      <y>160</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -171,8 +180,8 @@
    <widget class="QComboBox" name="Combo_Hora">
     <property name="geometry">
      <rect>
-      <x>120</x>
-      <y>180</y>
+      <x>10</x>
+      <y>190</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -195,8 +204,8 @@
    <widget class="QLabel" name="Label_Altitud">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>150</y>
+      <x>260</x>
+      <y>160</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -214,8 +223,8 @@
    <widget class="QComboBox" name="Combo_Altitud">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>180</y>
+      <x>230</x>
+      <y>190</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -234,8 +243,8 @@
    <widget class="QLabel" name="Label_Latitud">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>230</y>
+      <x>150</x>
+      <y>240</y>
       <width>91</width>
       <height>21</height>
      </rect>
@@ -253,8 +262,8 @@
    <widget class="QLabel" name="Label_Longitud">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>320</y>
+      <x>150</x>
+      <y>330</y>
       <width>81</width>
       <height>21</height>
      </rect>
@@ -272,8 +281,8 @@
    <widget class="QComboBox" name="Combo_Longitud_Min">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>370</y>
+      <x>20</x>
+      <y>380</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -292,8 +301,8 @@
    <widget class="QLabel" name="Label_Variable">
     <property name="geometry">
      <rect>
-      <x>270</x>
-      <y>460</y>
+      <x>160</x>
+      <y>470</y>
       <width>71</width>
       <height>31</height>
      </rect>
@@ -305,29 +314,14 @@
      </font>
     </property>
     <property name="text">
-     <string>Variable</string>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="Combo_Variable">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>500</y>
-      <width>171</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <pointsize>12</pointsize>
-     </font>
+     <string>Variables</string>
     </property>
    </widget>
    <widget class="QPushButton" name="Push_Visualizar">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>560</y>
+      <x>90</x>
+      <y>850</y>
       <width>211</width>
       <height>61</height>
      </rect>
@@ -344,8 +338,8 @@
    <widget class="QCheckBox" name="Check_Mapa">
     <property name="geometry">
      <rect>
-      <x>150</x>
-      <y>420</y>
+      <x>40</x>
+      <y>430</y>
       <width>321</width>
       <height>21</height>
      </rect>
@@ -363,8 +357,8 @@
    <widget class="QComboBox" name="Combo_Latitud_Min">
     <property name="geometry">
      <rect>
-      <x>130</x>
-      <y>270</y>
+      <x>20</x>
+      <y>280</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -383,8 +377,8 @@
    <widget class="QComboBox" name="Combo_Latitud_Max">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>270</y>
+      <x>190</x>
+      <y>280</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -403,8 +397,8 @@
    <widget class="QComboBox" name="Combo_Longitud_Max">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>370</y>
+      <x>190</x>
+      <y>380</y>
       <width>141</width>
       <height>22</height>
      </rect>
@@ -423,8 +417,8 @@
    <widget class="QLabel" name="Label_Archivo">
     <property name="geometry">
      <rect>
-      <x>380</x>
-      <y>50</y>
+      <x>270</x>
+      <y>60</y>
       <width>81</width>
       <height>20</height>
      </rect>
@@ -455,6 +449,22 @@
     </property>
     <property name="text">
      <string>RESET</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="Combo_Variable">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>510</y>
+      <width>231</width>
+      <height>311</height>
+     </rect>
+    </property>
+    <property name="focusPolicy">
+     <enum>Qt::ClickFocus</enum>
+    </property>
+    <property name="selectionMode">
+     <enum>QAbstractItemView::MultiSelection</enum>
     </property>
    </widget>
   </widget>
