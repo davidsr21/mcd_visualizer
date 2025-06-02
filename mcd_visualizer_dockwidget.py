@@ -31,28 +31,84 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.ruta = r"C:\MCD6.1\data"
         # Dictionary mapping human-readable era names to actual folder names
         self.lista_carpetas = {
-            "Promedio Anual": "clim_aveEUV",
-            "Frio": "cold",
-            "Templado": "warm",
-            "Tormentoso": "strm",
-            "Año Marciano 24": "MY24",
-            "Año Marciano 25": "MY25",
-            "Año Marciano 26": "MY26",
-            "Año Marciano 27": "MY27",
-            "Año Marciano 28": "MY28",
-            "Año Marciano 29": "MY29",
-            "Año Marciano 30": "MY30",
-            "Año Marciano 31": "MY31",
-            "Año Marciano 32": "MY32",
-            "Año Marciano 33": "MY33",
-            "Año Marciano 34": "MY34",
-            "Año Marciano 35": "MY35",
+            "Yearly Average": "clim_aveEUV",
+            "Cold": "cold",
+            "Warm": "warm",
+            "Stormy": "strm",
+            "Martian Year 24": "MY24",
+            "Martian Year 25": "MY25",
+            "Martian Year 26": "MY26",
+            "Martian Year 27": "MY27",
+            "Martian Year 28": "MY28",
+            "Martian Year 29": "MY29",
+            "Martian Year 30": "MY30",
+            "Martian Year 31": "MY31",
+            "Martian Year 32": "MY32",
+            "Martian Year 33": "MY33",
+            "Martian Year 34": "MY34",
+            "Martian Year 35": "MY35",
+        }
+
+        self.variable_descriptions = {
+            "tsurf":"Surface temperature (K)",
+            "ps":"Surface pressure (Pa)",
+            "co2ice":"CO₂ ice cover (kg m⁻²)",
+            "fluxsurf_lw":"LW (thermal IR) radiative flux to surface (W m⁻²)",
+            "fluxtop_lw":"LW (thermal IR) radiative flux to space (W m⁻²)",
+            "fluxsurf_dn_sw":"SW (solar) incoming radiative flux to surface (W m⁻²)",
+            "fluxsurf_dir_dn_sw":"SW (solar) direct incoming radiative flux to surface (W m⁻²)",
+            "fluxsurf_up_sw":"SW (solar) reflected radiative flux from surface (W m⁻²)",
+            "fluxtop_up_sw":"SW (solar) outgoing radiative flux to space (W m⁻²)",
+            "fluxtop_dn_sw":"SW (solar) incoming radiative flux from space (W m⁻²)",
+            "tau_pref_gcm":"Monthly mean visible dust optical depth at 610 Pa (unitless)",
+            "col_h2ovapor":"Water vapor column (kg m⁻²)",
+            "col_h2oice":"Water ice column (kg m⁻²)",
+            "zmax":"Height of thermals in the PBL (m)",
+            "hfmax":"Maximum thermals heat flux (K·m/s)",
+            "wstar":"Vertical velocity scale in thermals (m/s)",
+            "h2oice":"H₂O ice cover (seasonal frost) (kg m⁻²)",
+            "c_co2":"CO₂ column (molecules/cm²)",
+            "c_co":"CO column (molecules/cm²)",
+            "c_o":"O column (molecules/cm²)",
+            "c_o2":"O₂ column (molecules/cm²)",
+            "c_o3":"O₃ column (molecules/cm²)",
+            "c_h":"H column (molecules/cm²)",
+            "c_h2":"H₂ column (molecules/cm²)",
+            "c_n2":"N₂ column (molecules/cm²)",
+            "c_ar":"Ar column (molecules/cm²)",
+            "c_he":"He column (molecules/cm²)",
+            "c_elec":"Total Electronic Content (TEC) (electrons/cm²)",
+            "rho":"Atmospheric density (kg m⁻³)",
+            "temp":"Atmospheric temperature (K)",
+            "u":"Zonal (East–West) wind (m/s)",
+            "v":"Meridional (North–South) wind (m/s)",
+            "w":"Vertical (up–down) wind (m/s)",
+            "vmr_h2ovapor":"Water vapor volume mixing ratio (mol/mol)",
+            "vmr_h2oice":"Water ice volume mixing ratio (mol/mol)",
+            "vmr_co2":"CO₂ volume mixing ratio (mol/mol)",
+            "vmr_co":"CO volume mixing ratio (mol/mol)",
+            "vmr_o":"O volume mixing ratio (mol/mol)",
+            "vmr_o2":"O₂ volume mixing ratio (mol/mol)",
+            "vmr_o3":"O₃ volume mixing ratio (mol/mol)",
+            "vmr_h":"H volume mixing ratio (mol/mol)",
+            "vmr_h2":"H₂ volume mixing ratio (mol/mol)",
+            "vmr_n2":"N₂ volume mixing ratio (mol/mol)",
+            "vmr_ar":"Ar volume mixing ratio (mol/mol)",
+            "vmr_he":"He volume mixing ratio (mol/mol)",
+            "vmr_elec":"Electron number density (mol/mol)",
+            "dustq":"Dust mass mixing ratio (kg/kg)",
+            "reffdust":"Dust effective radius (m)",
+            "reffice":"Water ice effective radius (m)",
         }
 
         self.Combo_Epoca.clear()
         self.Combo_Epoca.addItems(list(self.lista_carpetas.keys()))
         self.Combo_Epoca.setCurrentIndex(0)
         self.cambio_epoca(self.Combo_Epoca.currentText())
+
+        self.Combo_Altitud.setEnabled(False)
+        self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
+        self.Combo_Altitud.setToolTip("Select one variable at least")
 
         self.Combo_Epoca.currentTextChanged.connect(self.cambio_epoca)
         self.Combo_Archivo.currentTextChanged.connect(self.cambio_archivo)
@@ -62,8 +118,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Push_Visualizar.clicked.connect(self.visualizar_variable)
         self.Push_Reset.clicked.connect(self.reset_all)
 
-
+        self.toggle_altitude_multi()
         self.toggle_map_latlon_mode(self.Check_Mapa.checkState())
+
 
     def cambio_epoca(self, epoca):
         #Handler for when the era combo changes: populate the file list
@@ -112,23 +169,26 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.ds = ds_nuevo
 
-        prev_alt = self.Combo_Altitud.currentText()
-
-        prev_vars = [item.text() for item in self.Combo_Variable.selectedItems()]
+        prev_vars = [item.data(Qt.UserRole) for item in self.Combo_Variable.selectedItems()] #We save already selected variables for its name in "crude"
         self.Combo_Variable.clear()
+
         for varname in self.ds.data_vars.keys():
-            item = QtWidgets.QListWidgetItem(varname)
-            self.Combo_Variable.addItem(item)
+            data_array = self.ds[varname]
+            if("latitude" in data_array.dims) and ("longitude" in data_array.dims):
+                if varname in self.variable_descriptions:
+                    label = self.variable_descriptions[varname]
+                    item = QtWidgets.QListWidgetItem(label)
+                else:
+                    item = QtWidgets.QListWidgetItem(f"ERROR: {varname}")
+                    item.setForeGround(QColor("red"))
+
+                item.setData(Qt.UserRole, varname)
+                self.Combo_Variable.addItem(item)
 
         for i in range(self.Combo_Variable.count()):
             itm = self.Combo_Variable.item(i)
-            if itm.text() in prev_vars:
+            if itm.data(Qt.UserRole) in prev_vars:
                 itm.setSelected(True)
-
-        if not self.Combo_Variable.selectedItems() and self.Combo_Variable.count() > 0:
-            self.Combo_Variable.item(0).setSelected(True)
-
-        self.toggle_altitude_multi()
 
         prev_hora = self.Combo_Hora.currentText()
         time_vals = [str(int(t)) for t in self.ds.Time.values]
@@ -140,6 +200,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if len(time_vals) > 0:
                 self.Combo_Hora.setCurrentIndex(0)
 
+        prev_alt = self.Combo_Altitud.currentText()
         if "altitude" in self.ds.coords or "altitude" in self.ds.dims:
             alt_vals = [f"{a:.4f}" for a in self.ds.altitude.values]
 
@@ -157,7 +218,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             self.Combo_Altitud.setEnabled(False)
             self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-            self.Combo_Altitud.setToolTip("El NetCDF no contiene dimensión 'altitude'")
+            self.Combo_Altitud.setToolTip("NetCDF file does not contain 'altitude' dimension")
 
         prev_lat_min = self.Combo_Latitud_Min.currentText()
         prev_lat_max = self.Combo_Latitud_Max.currentText()
@@ -196,30 +257,28 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if len(lon_vals) > 0:
                 self.Combo_Longitud_Max.setCurrentIndex(0)
 
+        self.toggle_altitude_multi()
+
     def toggle_altitude_multi(self):
-        vars_marcadas = [item.text() for item in self.Combo_Variable.selectedItems()]
+        vars_marcadas = [item.data(Qt.UserRole) for item in self.Combo_Variable.selectedItems()]
 
-        if len(vars_marcadas) == 0:
+        if not vars_marcadas:
             self.Combo_Altitud.setEnabled(False)
             self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-            self.Combo_Altitud.setToolTip("Marca al menos una variable")
+            self.Combo_Altitud.setToolTip("Select, at least, one variable")
             return
 
-        if len(vars_marcadas) > 1:
-            self.Combo_Altitud.setEnabled(True)
-            self.Combo_Altitud.setStyleSheet("")
-            self.Combo_Altitud.setToolTip("")
-            return
+        for var in vars_marcadas:
+            if var in self.ds.data_vars and "altitude" in self.ds[var].dims:
+                # habilito Altitud y salgo
+                self.Combo_Altitud.setEnabled(True)
+                self.Combo_Altitud.setStyleSheet("")
+                self.Combo_Altitud.setToolTip("")
+                return
 
-        var_unica = vars_marcadas[0]
-        if var_unica in self.ds.data_vars and "altitude" in self.ds[var_unica].dims:
-            self.Combo_Altitud.setEnabled(True)
-            self.Combo_Altitud.setStyleSheet("")
-            self.Combo_Altitud.setToolTip("")
-        else:
-            self.Combo_Altitud.setEnabled(False)
-            self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-            self.Combo_Altitud.setToolTip("La variable única no contiene dimensión 'altitude'")
+        self.Combo_Altitud.setEnabled(False)
+        self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
+        self.Combo_Altitud.setToolTip("Any variable selected contains 'altitude' dimension")
 
     def toggle_map_latlon_mode(self, estado):
 
@@ -281,7 +340,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                                     "Min longitude must be lower than max longitude")
                 return
 
-        vars_sel = [item.text() for item in self.Combo_Variable.selectedItems()]
+        vars_sel = [item.data(Qt.UserRole) for item in self.Combo_Variable.selectedItems()]
 
         if not vars_sel:
             QMessageBox.warning(self, "No variables", "You must select at least one variable")
@@ -324,12 +383,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 array = da.values
 
                 if array.size == 0:
-                    QMessageBox.warning(self, "No data", f"Variable {varname} has no data in the lat/lon cut.")
+                    QMessageBox.warning(self, "No data", f"Variable {self.variable_descriptions[varname]} has no data in the lat/lon cut.")
                     dlg.setValue(idx + 1)
                     QApplication.processEvents()
                     continue
 
-                layer_name = varname
+                layer_name = self.variable_descriptions[varname]
                 self._mostrar_raster(array, lats, lons, layer_name)
 
                 dlg.setValue(idx + 1)
