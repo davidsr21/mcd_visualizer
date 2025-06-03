@@ -106,17 +106,16 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Epoca.setCurrentIndex(0)
         self.cambio_epoca(self.Combo_Epoca.currentText())
 
-        self.Combo_Altitud.setEnabled(False)
-        self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-        self.Combo_Altitud.setToolTip("Select one variable at least")
-
         self.Combo_Epoca.currentTextChanged.connect(self.cambio_epoca)
         self.Combo_Archivo.currentTextChanged.connect(self.cambio_archivo)
-
         self.Combo_Variable.itemSelectionChanged.connect(self.toggle_altitude_multi)
         self.Check_Mapa.stateChanged.connect(self.toggle_map_latlon_mode)
         self.Push_Visualizar.clicked.connect(self.visualizar_variable)
         self.Push_Reset.clicked.connect(self.reset_all)
+
+        self.Combo_Altitud.setEnabled(False)
+        self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
+        self.Combo_Altitud.setToolTip("Select one variable at least")
 
         self.toggle_altitude_multi()
         self.toggle_map_latlon_mode(self.Check_Mapa.checkState())
@@ -388,8 +387,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     QApplication.processEvents()
                     continue
 
-                layer_name = self.variable_descriptions[varname]
-                self._mostrar_raster(array, lats, lons, layer_name)
+                display_name = self.variable_descriptions[varname]
+                self._mostrar_raster(array, lats, lons, varname, display_name)
 
                 dlg.setValue(idx + 1)
                 QApplication.processEvents()
@@ -487,7 +486,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mola_layer_id = cont_layer.id()
         self.mola_loaded = True
 
-    def _mostrar_raster(self, array, lat, lon, nombre):
+    def _mostrar_raster(self, array, lat, lon, safe_name, layer_name):
         arr = np.asarray(array) #Internal method to display a numpy array as a QGIS raster layer
 
         #Check that data array is non-empty
@@ -509,7 +508,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         #Create temporary GeoTIFF file
         temp_dir = tempfile.gettempdir()
-        filename = f"{nombre}_{uuid.uuid4().hex}.tif"
+        filename = f"{safe_name}_{uuid.uuid4().hex}.tif"
         path = os.path.join(temp_dir, filename)
 
         #Create geotransform parameters
@@ -528,7 +527,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         ds = None
 
         #Load Geo TIFF as a QGIS Raster Layer
-        layer = QgsRasterLayer(path, nombre)
+        layer = QgsRasterLayer(path, layer_name)
         if not layer.isValid():
             QMessageBox.critical(self, "Error", "No se pudo cargar el raster.")
             return
