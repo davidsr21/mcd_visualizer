@@ -1,7 +1,7 @@
 import os
 from qgis.PyQt import uic, QtWidgets
 
-UI_PATH = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'interp_config_dialog.ui'))
+UI_PATH = os.path.join(os.path.dirname(__file__), 'interp_config_dialog.ui')
 Ui_InterpConfigDialog, _ = uic.loadUiType(UI_PATH)
 
 class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
@@ -16,20 +16,33 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         if cfg_raw:
             self.Combo_Time_Mode.setCurrentText("Raw data")
             self.Combo_Time_Resolution.setEnabled(False)
-            self.Combo_Time_Resolution.currentText("1 hour")
+            self.Combo_Time_Resolution.setCurrentText("1 hour")
         else:
             self.Combo_Time_Mode.setCurrentText("Interpolate data")
             self.Combo_Time_Resolution.setEnabled(True)
-            self.Combo_Time_Resolution.currentText("1 hour")
+            self.Combo_Time_Resolution.setCurrentText("1 hour")
+
+        cfg_alt_raw = getattr(parent, "time_raw", True)
+        cfg_alt_step = getattr (parent, "time_step", "1 Hour")
+
+        if cfg_alt_raw:
+            self.Combo_Altitude_Mode.setCurrentText("Raw data")
+            self.Combo_Altitude_Resolution.setEnabled(False)
+            self.Combo_Altitude_Resolution.setCurrentText("1 km")
+        else:
+            self.Combo_Altitude_Mode.setCurrentText("Interpolate data")
+            self.Combo_Altitude_Resolution.setEnabled(True)
+            self.Combo_Altitude_Resolution.setCurrentText("1 km")
 
         #Signal Connections stablished
         self.Combo_Time_Mode.currentTextChanged.connect(self._on_mode_changed)
-        self.ButtonBox.accepted.connect(self._on_accept)
-        self.ButtonBox.rejected.connect(self.reject)
+        self.Combo_Altitude_Mode.currentTextChanged.connect(self._on_alt_mode_changed)
+        self.buttonBox.accepted.connect(self._on_accept)
+        self.buttonBox.rejected.connect(self.reject)
 
-        ok_btn = self.ButtonBox.button(QtWidgets.QDialogButtonBox.Ok)
-        cancel_btn = self.ButtonBox.button(QtWidgets.QDialogButtonBox.Cancel)
-        ok_btn.setText("Ok")
+        ok_btn = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
+        cancel_btn = self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel)
+        ok_btn.setText("Accept")
         cancel_btn.setText("Cancel")
 
     def _on_mode_changed(self, text):
@@ -42,6 +55,16 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         if not is_interp:
             self.Combo_Time_Resolution.setCurrentIndex(0)
 
+    def _on_alt_mode_changed(self, text):
+        """
+        Enables/disables resolution selector depending on Data Input
+        """
+        is_interp = (text == "Interpolate data")
+        self.Combo_Altitude_Resolution.setEnabled(is_interp) #If is_interp is not "Interpolation data" then, this is false and remains disabled
+
+        if not is_interp:
+            self.Combo_Altitude_Resolution.setCurrentIndex(0)
+
     def _on_accept(self):
         """
         This function is invocated when Ok buton is pushed:
@@ -50,6 +73,8 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         """
         p = self.parent()
         #Throws new values into main plugin
-        p.time_raw = (self.Combo_Time_Mode.CurrentText() == "Raw data")
+        p.time_raw = (self.Combo_Time_Mode.currentText() == "Raw data")
         p.time_step = self.Combo_Time_Resolution.currentText()
+        p.alt_raw = (self.Combo_Altitude_Mode.currentText() == "Raw data")
+        p.alt_step = self.Combo_Altitude_Resolution.currentText()
         self.accept()

@@ -31,6 +31,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.time_raw = True #True =  Uses raw data, False = Interpolates
         self.time_step = "1 hour" #Resolution of selected interpolation
 
+        self.alt_raw = True
+        self.alt_step = "1 km"
+
         # Base path  where NETCDF and MOLA data store
         self.ruta = r"C:\MCD6.1\data"
         # Dictionary mapping human-readable era names to actual folder names
@@ -127,21 +130,77 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def open_interp_config(self):
         dlg = InterpConfigDialog(parent=self)
-        if dlg.exec_() != QtWidgets.QDialog.Accepted: # We open and block the emerging window, locking the interaction. If accepted button is clicked, it jumps to refrehs. It cancel button (or closes the window) is clicked, it leaves the function
+        if dlg.exec_() != QtWidgets.QDialog.Accepted: # We open and block the emerging window, locking the interaction. If accepted button is clicked, it jumps to refrehs. It cancels button (or closes the window) is clicked, it leaves the function
             return
 
         self.refresh_time_combo()
+        self.refresh_alt_combo()
 
     def refresh_time_combo(self):
-        self.Combo_Hora.clear()
         times = self.ds.Time.values.astype(float)
+        t_min = times.min()
+        t_max = times.max()
 
         if self.time_raw:
-            labels = [str(int(t)) for t in times]
+            grid = times
         else:
-            step = self.time_step
-            if step == "1 hour":
-                grid = times
+            if self.time_step == "1 hour":
+                step = 1
+            elif self.time_step == "30 min":
+                step = 0.5
+            elif self.time_step == "15 min":
+                step = 0.25
+            else:
+                step = 1.0
+
+            extra = np.arange(step, t_min, step)
+            main = np.arange(t_min, t_max + 1e-6, step)
+            grid = np.concatenate([extra, main])
+
+        labels = []
+
+        for t in grid:
+            h = int(t)
+            m = int(round((t-h) * 60))
+
+            if m == 60:
+                t = t+1
+                m = 0
+
+            labels.append(f"{h:02d}:{m:02d}")
+
+        self.Combo_Hora.clear()
+        self.Combo_Hora.addItems(labels)
+
+    def refresh_alt_combo(self):
+        self.Combo_Altitud.clear()
+        alts = self.ds.altitude.values.astype(float)
+
+        alt_min = alts.min()
+        alt_max = alt.max()
+
+        if self.alt_raw:
+            grid = alts
+        elif self.alt_step == "1 km":
+            grid = np.arange(a_min, a_max + 1e-6, 1.0)
+
+        elif self.alt_step == "0.5 km":
+            grid = np.arange(a_min, a_max + 1e-6, 0.5)
+
+        elif self.alt_step == "0.25 km":
+            grid = np.arange(a_min, a_max + 1e-6, 0.25)
+
+        elif self.alt_step == "0.1 km":
+            grid = np.arange(a_min, a_max + 1e-6, 0.1)
+        else:
+            grid = alts
+
+        labels = []
+
+        for a in grid:
+            labels = [f"{a:.3f}"]
+
+        self.Combo_Altitud.addItems(labels)
 
     def cambio_epoca(self, epoca):
         #Handler for when the era combo changes: populate the file list
@@ -179,7 +238,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         epoca_label = self.Combo_Epoca.currentText()
         carpeta = self.lista_carpetas.get(epoca_label)
         if not carpeta:
-            return
+           return
 
         path = os.path.join(self.ruta, carpeta, archivo_nombre)
         try:
@@ -212,14 +271,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 itm.setSelected(True)
 
         prev_hora = self.Combo_Hora.currentText()
-        time_vals = [str(int(t)) for t in self.ds.Time.values]
-        self.Combo_Hora.clear()
-        self.Combo_Hora.addItems(time_vals)
-        if prev_hora in time_vals:
+        self.refresh_time_combo()
+        items = [self.Combo_Hora.itemText(i) for i in range(self.Combo_Hora.count())]
+        if prev_hora in items:
             self.Combo_Hora.setCurrentText(prev_hora)
-        else:
-            if len(time_vals) > 0:
-                self.Combo_Hora.setCurrentIndex(0)
+        elif self.Combo_Hora.count() > 0:
+            self.Combo_Hora.setCurrentIndex(0)
 
         prev_alt = self.Combo_Altitud.currentText()
         if "altitude" in self.ds.coords or "altitude" in self.ds.dims:
@@ -330,6 +387,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.Combo_Hora.count() > 0:
             self.Combo_Hora.setCurrentIndex(0)
 
+        self.time_raw = "True"
+        self.time_step = "1 hour"
+        self.refresh_time_combo()
+
         if self.Combo_Altitud.isEnabled() and self.Combo_Altitud.count() > 0:
             self.Combo_Altitud.setCurrentIndex(0)
 
@@ -379,7 +440,23 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 da = self.ds[varname]
 
                 if "Time" in da.dims:
-                    da = da.isel(Time = self.Combo_Hora.currentIndex())
+                    if self.time_raw:
+                        da = da.isel(Time = self.Combo_Hora.currentIndex())
+                    else:
+                        time_str = self.Combo_Hora.currentText()
+                        h, m = map(int, time_str.split(":"))
+                        user_time = h + m/60.0
+
+                        t_min = float(self.ds.Time.values.min())
+                        t_max = float(self.ds.Time.values.max())
+
+                        if user_time >= t_min:
+                            da = da.interp(Time = user_time, method = "linear") #normal interp [t_min, t_max]
+                        else:
+                            frac = user_time/t_min
+                            v_low = da.sel(Time = t_max)
+                            v_high = da.sel(Time = t_min)
+                            da = v_low*(1-frac) + v_high*frac
 
                 if "altitude" in da.dims and self.Combo_Altitud.isEnabled():
                     da = da.isel(altitude = self.Combo_Altitud.currentIndex())
@@ -509,9 +586,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mola_loaded = True
 
     def _mostrar_raster(self, array, lat, lon, safe_name, layer_name):
-        arr = np.asarray(array) #Internal method to display a numpy array as a QGIS raster layer
+        arr = np.asarray(array)  # Internal method to display a numpy array as a QGIS raster layer
 
-        #Check that data array is non-empty
+        # Check that data array is non-empty
         if arr.size == 0 or len(lat) == 0 or len(lon) == 0:
             QMessageBox.warning(
                 self,
@@ -520,20 +597,20 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             )
             return
 
-        # Ensure data to be displyed is 2D
+        # Ensure data to be displayed is 2D
         if arr.ndim != 2:
-            QMessageBox.warning(self, "ERROR", "Raster is not a 2D Filaye. Cannot be desplayed")
+            QMessageBox.warning(self, "ERROR", "Raster is not a 2D array. Cannot be displayed")
             return
 
-        #Flip vertically for correct georeferencing
+        # Flip vertically for correct georeferencing
         arr = np.flipud(arr)
 
-        #Create temporary GeoTIFF file
+        # Create temporary GeoTIFF file
         temp_dir = tempfile.gettempdir()
         filename = f"{safe_name}_{uuid.uuid4().hex}.tif"
         path = os.path.join(temp_dir, filename)
 
-        #Create geotransform parameters
+        # Create geotransform parameters
         nrows, ncols = arr.shape
         xres = (lon[-1] - lon[0]) / ncols
         yres = (lat[-1] - lat[0]) / nrows
@@ -548,13 +625,13 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         ds.FlushCache()
         ds = None
 
-        #Load Geo TIFF as a QGIS Raster Layer
+        # Load GeoTIFF as a QGIS Raster Layer
         layer = QgsRasterLayer(path, layer_name)
         if not layer.isValid():
             QMessageBox.critical(self, "Error", "No se pudo cargar el raster.")
             return
 
-        #Apply pseudo-color renderer using turbo-ramp
+        # Apply pseudo-color renderer using turbo-ramp
         provider = layer.dataProvider()
         ramp = QgsStyle().defaultStyle().colorRamp('Turbo')
         renderer = QgsSingleBandPseudoColorRenderer(provider, 1)
@@ -564,14 +641,18 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             Qgis.ShaderClassificationMethod.Continuous,
             0
         )
-        layer.setRenderer(renderer)
-        layer.setOpacity(0.8) #Layer opacity up to 80%
 
-        #Add layer to the project
+        renderer.setClassificationMin(float(arr.min()))
+        renderer.setClassificationMax(float(arr.max()))
+
+        layer.setRenderer(renderer)
+        layer.setOpacity(0.8)  # Layer opacity up to 80%
+
+        # Add layer to the project
         QgsProject.instance().addMapLayer(layer)
         layer.triggerRepaint()
 
-        #Automatically applpy symology changes by simulating Apply click
+        # Automatically apply symbology changes by simulating Apply click
         iface.showLayerProperties(layer, 'symbology')
         for w in QApplication.topLevelWidgets():
             if isinstance(w, QDialog) and w.windowTitle().startswith("Propiedades de capa"):

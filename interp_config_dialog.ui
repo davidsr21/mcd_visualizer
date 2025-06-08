@@ -95,7 +95,7 @@
   <widget class="QLabel" name="Label_Hora_Interp_2">
    <property name="geometry">
     <rect>
-     <x>80</x>
+     <x>90</x>
      <y>30</y>
      <width>91</width>
      <height>20</height>
@@ -116,7 +116,7 @@
   <widget class="QLabel" name="Label_Hora_Interp_3">
    <property name="geometry">
     <rect>
-     <x>260</x>
+     <x>280</x>
      <y>30</y>
      <width>161</width>
      <height>20</height>
@@ -154,6 +154,129 @@
    <property name="standardButtons">
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
+  </widget>
+  <widget class="QLabel" name="Label_Altitud_Interp">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>120</y>
+     <width>201</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+     <underline>true</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Altitude Configuration</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Altitud_Interp_3">
+   <property name="geometry">
+    <rect>
+     <x>300</x>
+     <y>150</y>
+     <width>161</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Altitude Resolution</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="Combo_Altitude_Resolution">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>170</y>
+     <width>151</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <item>
+    <property name="text">
+     <string>1 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.5 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.25 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.1 km</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QLabel" name="Label_Altitud_Interp_2">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>150</y>
+     <width>91</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Data Input</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="Combo_Altitude_Mode">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>170</y>
+     <width>151</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <item>
+    <property name="text">
+     <string>Raw data</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Interpolate data</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <resources/>
