@@ -173,33 +173,36 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Hora.addItems(labels)
 
     def refresh_alt_combo(self):
-        self.Combo_Altitud.clear()
         alts = self.ds.altitude.values.astype(float)
-
         alt_min = alts.min()
-        alt_max = alt.max()
+        alt_max = alts.max()
 
         if self.alt_raw:
             grid = alts
-        elif self.alt_step == "1 km":
-            grid = np.arange(a_min, a_max + 1e-6, 1.0)
-
-        elif self.alt_step == "0.5 km":
-            grid = np.arange(a_min, a_max + 1e-6, 0.5)
-
-        elif self.alt_step == "0.25 km":
-            grid = np.arange(a_min, a_max + 1e-6, 0.25)
-
-        elif self.alt_step == "0.1 km":
-            grid = np.arange(a_min, a_max + 1e-6, 0.1)
         else:
-            grid = alts
+            if self.alt_step == "1 km":
+                grid = np.arange(alt_min, alt_max + 1e-6, 1.0)
+
+            elif self.alt_step == "0.5 km":
+                grid = np.arange(alt_min, alt_max + 1e-6, 0.5)
+
+            elif self.alt_step == "0.25 km":
+                grid = np.arange(alt_min, alt_max + 1e-6, 0.25)
+
+            elif self.alt_step == "0.1 km":
+                grid = np.arange(alt_min, alt_max + 1e-6, 0.1)
+            else:
+                grid = alts
 
         labels = []
 
         for a in grid:
-            labels = [f"{a:.3f}"]
+            if self.alt_raw:
+                labels.append(f"{a:.4f}")
+            else:
+                labels.append(f"{a:.2f}")
 
+        self.Combo_Altitud.clear()
         self.Combo_Altitud.addItems(labels)
 
     def cambio_epoca(self, epoca):
@@ -228,8 +231,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             if len(archivos) > 0:
                 self.Combo_Archivo.setCurrentIndex(0)
-                first = self.Combo_Archivo.currentText()
-                self.cambio_archivo(first)
+                self.cambio_archivo(self.Combo_Archivo.currentText())
 
     def cambio_archivo(self, archivo_nombre):
         if not archivo_nombre:
@@ -254,9 +256,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         for varname in self.ds.data_vars.keys():
             data_array = self.ds[varname]
-            if("latitude" in data_array.dims) and ("longitude" in data_array.dims):
+            if("latitude" in data_array.dims) and ("longitude" in data_array.dims): #I just want to have variables that contain latitude and longitude dimensions. Otherwise, none of my interest
                 if varname in self.variable_descriptions:
-                    label = self.variable_descriptions[varname]
+                    label = self.variable_descriptions[varname] # I assign a "human" name to thoses varnames (e.g. temp = "Surface Temparature (K)")
                     item = QtWidgets.QListWidgetItem(label)
                 else:
                     item = QtWidgets.QListWidgetItem(f"ERROR: {varname}")
@@ -272,24 +274,29 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         prev_hora = self.Combo_Hora.currentText()
         self.refresh_time_combo()
-        items = [self.Combo_Hora.itemText(i) for i in range(self.Combo_Hora.count())]
+
+        items = []
+        for i in range(self.Combo_Hora.count()):
+            items.append(self.Combo_Hora.itemText(i))
+
         if prev_hora in items:
             self.Combo_Hora.setCurrentText(prev_hora)
         elif self.Combo_Hora.count() > 0:
             self.Combo_Hora.setCurrentIndex(0)
 
         prev_alt = self.Combo_Altitud.currentText()
-        if "altitude" in self.ds.coords or "altitude" in self.ds.dims:
-            alt_vals = [f"{a:.4f}" for a in self.ds.altitude.values]
+        self.refresh_alt_combo()
 
-            self.Combo_Altitud.clear()
-            self.Combo_Altitud.addItems(alt_vals)
-            if prev_alt in alt_vals:
-                self.Combo_Altitud.setCurrentText(prev_alt)
-            else:
-                if len(alt_vals) > 0:
-                    self.Combo_Altitud.setCurrentIndex(0)
+        items_a = []
+        for i in range(self.Combo_Altitud.count()):
+            items_a.append(self.Combo_Altitud.itemText(i))
 
+        if prev_alt in items_a:
+            self.Combo_Altitud.setCurrentText(prev_alt)
+        elif self.Combo_Altitud.count() > 0:
+            self.Combo_Altitud.setCurrentIndex(0)
+
+        if "altitude" in self.ds.dims:
             self.Combo_Altitud.setEnabled(True)
             self.Combo_Altitud.setStyleSheet("")
             self.Combo_Altitud.setToolTip("")
@@ -394,6 +401,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.Combo_Altitud.isEnabled() and self.Combo_Altitud.count() > 0:
             self.Combo_Altitud.setCurrentIndex(0)
 
+        self.alt_raw = "True"
+        self.alt_step = "1 km"
+        self.refresh_alt_combo()
+
         if self.Combo_Latitud_Min.count() > 0:
             self.Combo_Latitud_Min.setCurrentIndex(0)
         if self.Combo_Latitud_Max.count() > 0:
@@ -459,7 +470,15 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             da = v_low*(1-frac) + v_high*frac
 
                 if "altitude" in da.dims and self.Combo_Altitud.isEnabled():
-                    da = da.isel(altitude = self.Combo_Altitud.currentIndex())
+                    if self.alt_raw:
+                        da = da.isel(altitude = self.Combo_Altitud.currentIndex())
+                    else:
+                        user_alt = float(self.Combo_Altitud.currentText())
+
+                        alt_min = float(self.ds.altitude.values.min())
+                        alt_max = float(self.ds.altitude.values.max())
+
+                        da = da.interp(altitude = user_alt, method = "linear")
 
                 if not self.Check_Mapa.isChecked():
                     lat_vals = self.ds.latitude.values
@@ -586,9 +605,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.mola_loaded = True
 
     def _mostrar_raster(self, array, lat, lon, safe_name, layer_name):
-        arr = np.asarray(array)  # Internal method to display a numpy array as a QGIS raster layer
+        arr = np.asarray(array) #Internal method to display a numpy array as a QGIS raster layer
 
-        # Check that data array is non-empty
+        #Check that data array is non-empty
         if arr.size == 0 or len(lat) == 0 or len(lon) == 0:
             QMessageBox.warning(
                 self,
@@ -597,20 +616,20 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             )
             return
 
-        # Ensure data to be displayed is 2D
+        # Ensure data to be displyed is 2D
         if arr.ndim != 2:
-            QMessageBox.warning(self, "ERROR", "Raster is not a 2D array. Cannot be displayed")
+            QMessageBox.warning(self, "ERROR", "Raster is not a 2D Filaye. Cannot be desplayed")
             return
 
-        # Flip vertically for correct georeferencing
+        #Flip vertically for correct georeferencing
         arr = np.flipud(arr)
 
-        # Create temporary GeoTIFF file
+        #Create temporary GeoTIFF file
         temp_dir = tempfile.gettempdir()
         filename = f"{safe_name}_{uuid.uuid4().hex}.tif"
         path = os.path.join(temp_dir, filename)
 
-        # Create geotransform parameters
+        #Create geotransform parameters
         nrows, ncols = arr.shape
         xres = (lon[-1] - lon[0]) / ncols
         yres = (lat[-1] - lat[0]) / nrows
@@ -625,13 +644,13 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         ds.FlushCache()
         ds = None
 
-        # Load GeoTIFF as a QGIS Raster Layer
+        #Load Geo TIFF as a QGIS Raster Layer
         layer = QgsRasterLayer(path, layer_name)
         if not layer.isValid():
             QMessageBox.critical(self, "Error", "No se pudo cargar el raster.")
             return
 
-        # Apply pseudo-color renderer using turbo-ramp
+        #Apply pseudo-color renderer using turbo-ramp
         provider = layer.dataProvider()
         ramp = QgsStyle().defaultStyle().colorRamp('Turbo')
         renderer = QgsSingleBandPseudoColorRenderer(provider, 1)
@@ -641,18 +660,14 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             Qgis.ShaderClassificationMethod.Continuous,
             0
         )
-
-        renderer.setClassificationMin(float(arr.min()))
-        renderer.setClassificationMax(float(arr.max()))
-
         layer.setRenderer(renderer)
-        layer.setOpacity(0.8)  # Layer opacity up to 80%
+        layer.setOpacity(0.8) #Layer opacity up to 80%
 
-        # Add layer to the project
+        #Add layer to the project
         QgsProject.instance().addMapLayer(layer)
         layer.triggerRepaint()
 
-        # Automatically apply symbology changes by simulating Apply click
+        #Automatically applpy symology changes by simulating Apply click
         iface.showLayerProperties(layer, 'symbology')
         for w in QApplication.topLevelWidgets():
             if isinstance(w, QDialog) and w.windowTitle().startswith("Propiedades de capa"):

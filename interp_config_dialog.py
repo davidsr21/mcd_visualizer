@@ -49,20 +49,20 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         """
         Enables/disables resolution selector depending on Data Input
         """
-        is_interp = (text == "Interpolate data")
-        self.Combo_Time_Resolution.setEnabled(is_interp) #If is_interp is not "Interpolation data" then, this is false and remains disabled
+        is_interp_time = (text == "Interpolate data")
+        self.Combo_Time_Resolution.setEnabled(is_interp_time) #If is_interp is not "Interpolation data" then, this is false and remains disabled
 
-        if not is_interp:
+        if not is_interp_time:
             self.Combo_Time_Resolution.setCurrentIndex(0)
 
     def _on_alt_mode_changed(self, text):
         """
         Enables/disables resolution selector depending on Data Input
         """
-        is_interp = (text == "Interpolate data")
-        self.Combo_Altitude_Resolution.setEnabled(is_interp) #If is_interp is not "Interpolation data" then, this is false and remains disabled
+        is_interp_alt = (text == "Interpolate data")
+        self.Combo_Altitude_Resolution.setEnabled(is_interp_alt) #If is_interp is not "Interpolation data" then, this is false and remains disabled
 
-        if not is_interp:
+        if not is_interp_alt:
             self.Combo_Altitude_Resolution.setCurrentIndex(0)
 
     def _on_accept(self):
