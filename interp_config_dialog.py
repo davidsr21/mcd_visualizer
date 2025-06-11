@@ -22,8 +22,8 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
             self.Combo_Time_Resolution.setEnabled(True)
             self.Combo_Time_Resolution.setCurrentText("1 hour")
 
-        cfg_alt_raw = getattr(parent, "time_raw", True)
-        cfg_alt_step = getattr (parent, "time_step", "1 Hour")
+        cfg_alt_raw = getattr(parent, "alt_raw", True)
+        cfg_alt_step = getattr (parent, "alt_step", "1 Hour")
 
         if cfg_alt_raw:
             self.Combo_Altitude_Mode.setCurrentText("Raw data")
