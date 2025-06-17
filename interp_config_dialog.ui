@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>370</height>
+    <width>497</width>
+    <height>498</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -138,7 +138,7 @@
    <property name="geometry">
     <rect>
      <x>310</x>
-     <y>330</y>
+     <y>460</y>
      <width>171</width>
      <height>31</height>
     </rect>
@@ -175,62 +175,6 @@
    <property name="text">
     <string>Altitude Configuration</string>
    </property>
-  </widget>
-  <widget class="QLabel" name="Label_Altitud_Interp_3">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>150</y>
-     <width>161</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-     <weight>50</weight>
-     <bold>false</bold>
-     <underline>false</underline>
-    </font>
-   </property>
-   <property name="text">
-    <string>Altitude Resolution</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="Combo_Altitude_Resolution">
-   <property name="geometry">
-    <rect>
-     <x>280</x>
-     <y>170</y>
-     <width>151</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>12</pointsize>
-    </font>
-   </property>
-   <item>
-    <property name="text">
-     <string>1 km</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>0.5 km</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>0.25 km</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>0.1 km</string>
-    </property>
-   </item>
   </widget>
   <widget class="QLabel" name="Label_Altitud_Interp_2">
    <property name="geometry">
@@ -277,6 +221,315 @@
      <string>Interpolate data</string>
     </property>
    </item>
+  </widget>
+  <widget class="QLabel" name="Label_Longitud_Interp">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>220</y>
+     <width>201</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+     <underline>true</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Latitude Configuration</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Altitud_Interp_4">
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>260</y>
+     <width>161</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Latitude Resolution</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Altitud_Interp_5">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>260</y>
+     <width>91</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Data Input</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="Combo_Latitude_Mode">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>290</y>
+     <width>151</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <item>
+    <property name="text">
+     <string>Raw data</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Interpolate data</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QComboBox" name="Combo_Latitude_Resolution">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>290</y>
+     <width>151</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <item>
+    <property name="text">
+     <string>1 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.5 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.25 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.1 km</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QLabel" name="Label_Longitud_Interp_2">
+   <property name="geometry">
+    <rect>
+     <x>140</x>
+     <y>340</y>
+     <width>201</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+     <underline>true</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Latitude Configuration</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Altitud_Interp_6">
+   <property name="geometry">
+    <rect>
+     <x>280</x>
+     <y>380</y>
+     <width>161</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Latitude Resolution</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Altitud_Interp_7">
+   <property name="geometry">
+    <rect>
+     <x>90</x>
+     <y>380</y>
+     <width>91</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>50</weight>
+     <bold>false</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>Data Input</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="Combo_Longitude_Mode">
+   <property name="geometry">
+    <rect>
+     <x>50</x>
+     <y>410</y>
+     <width>151</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <item>
+    <property name="text">
+     <string>Raw data</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Interpolate data</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QComboBox" name="Combo_Longitude_Resolution">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>410</y>
+     <width>151</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <item>
+    <property name="text">
+     <string>1 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.5 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.25 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>0.1 km</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QLabel" name="Label_Hora_Interp_4">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>140</y>
+     <width>201</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>If &quot;Interpolate Data&quot; is chosen,</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Hora_Interp_5">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>160</y>
+     <width>211</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>introduce manually (in m) the</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="Label_Hora_Interp_6">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>180</y>
+     <width>201</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+     <underline>false</underline>
+    </font>
+   </property>
+   <property name="text">
+    <string>the desired altitude to display</string>
+   </property>
   </widget>
  </widget>
  <resources/>

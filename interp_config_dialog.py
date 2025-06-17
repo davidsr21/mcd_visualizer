@@ -23,16 +23,13 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
             self.Combo_Time_Resolution.setCurrentText("1 hour")
 
         cfg_alt_raw = getattr(parent, "alt_raw", True)
-        cfg_alt_step = getattr (parent, "alt_step", "1 Hour")
 
         if cfg_alt_raw:
             self.Combo_Altitude_Mode.setCurrentText("Raw data")
-            self.Combo_Altitude_Resolution.setEnabled(False)
-            self.Combo_Altitude_Resolution.setCurrentText("1 km")
+            self.Interpolate_Altitude.setVisible(False)
         else:
             self.Combo_Altitude_Mode.setCurrentText("Interpolate data")
-            self.Combo_Altitude_Resolution.setEnabled(True)
-            self.Combo_Altitude_Resolution.setCurrentText("1 km")
+            self.Interpolate_Altitude.setVisible(True)
 
         #Signal Connections stablished
         self.Combo_Time_Mode.currentTextChanged.connect(self._on_mode_changed)
@@ -47,7 +44,7 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
 
     def _on_mode_changed(self, text):
         """
-        Enables/disables resolution selector depending on Data Input
+        Enables/disables time resolution selector depending on Data Input
         """
         is_interp_time = (text == "Interpolate data")
         self.Combo_Time_Resolution.setEnabled(is_interp_time) #If is_interp is not "Interpolation data" then, this is false and remains disabled
@@ -57,15 +54,12 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
 
     def _on_alt_mode_changed(self, text):
         """
-        Enables/disables resolution selector depending on Data Input
+        Enables/disables altitude resolution selector depending on Data Input
         """
         is_interp_alt = (text == "Interpolate data")
-        self.Combo_Altitude_Resolution.setEnabled(is_interp_alt) #If is_interp is not "Interpolation data" then, this is false and remains disabled
+        self.Interpolate_Altitude.setVisible(is_interp_alt)
 
-        if not is_interp_alt:
-            self.Combo_Altitude_Resolution.setCurrentIndex(0)
-
-    def _on_accept(self):
+    def _on_accept(self): #Parent handler
         """
         This function is invocated when Ok buton is pushed:
             - Writes the chosen config by parent object
@@ -76,5 +70,14 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         p.time_raw = (self.Combo_Time_Mode.currentText() == "Raw data")
         p.time_step = self.Combo_Time_Resolution.currentText()
         p.alt_raw = (self.Combo_Altitude_Mode.currentText() == "Raw data")
-        p.alt_step = self.Combo_Altitude_Resolution.currentText()
+
+        if not p.alt_raw:
+            try:
+                p.alt_manual = float(self.Interpolate_Altitude.text())
+            except ValueError:
+                QtWidgets.QMessageBox.warning(self, "Altitude", "Introduce altitude number in meters")
+                return
+        else:
+            p.alt_manual = None
+
         self.accept()

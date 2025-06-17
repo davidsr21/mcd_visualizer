@@ -32,7 +32,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.time_step = "1 hour" #Resolution of selected interpolation
 
         self.alt_raw = True
-        self.alt_step = "1 km"
+        self.alt_manual = None
 
         # Base path  where NETCDF and MOLA data store
         self.ruta = r"C:\MCD6.1\data"
@@ -134,7 +134,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
 
         self.refresh_time_combo()
-        self.refresh_alt_combo()
+
+        if self.alt_raw:
+            self.refresh_alt_combo()
+            self.Combo_Altitud.setVisible(True)
+        else:
+           self.Combo_Altitud.setVisible(False)
 
     def refresh_time_combo(self):
         times = self.ds.Time.values.astype(float)
@@ -173,34 +178,15 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Hora.addItems(labels)
 
     def refresh_alt_combo(self):
+
+        if not self.alt_raw:
+            return
+
         alts = self.ds.altitude.values.astype(float)
-        alt_min = alts.min()
-        alt_max = alts.max()
-
-        if self.alt_raw:
-            grid = alts
-        else:
-            if self.alt_step == "1 km":
-                grid = np.arange(alt_min, alt_max + 1e-6, 1.0)
-
-            elif self.alt_step == "0.5 km":
-                grid = np.arange(alt_min, alt_max + 1e-6, 0.5)
-
-            elif self.alt_step == "0.25 km":
-                grid = np.arange(alt_min, alt_max + 1e-6, 0.25)
-
-            elif self.alt_step == "0.1 km":
-                grid = np.arange(alt_min, alt_max + 1e-6, 0.1)
-            else:
-                grid = alts
-
         labels = []
 
-        for a in grid:
-            if self.alt_raw:
-                labels.append(f"{a:.4f}")
-            else:
-                labels.append(f"{a:.2f}")
+        for a in alts:
+            labels.append(f"{a:.4f}")
 
         self.Combo_Altitud.clear()
         self.Combo_Altitud.addItems(labels)
@@ -284,26 +270,38 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         elif self.Combo_Hora.count() > 0:
             self.Combo_Hora.setCurrentIndex(0)
 
-        prev_alt = self.Combo_Altitud.currentText()
+        prev_alt_combo = self.Combo_Altitud.currentText()
+        prev_alt_manual = self.alt_manual
         self.refresh_alt_combo()
 
+        has_alt = "altitude" in self.ds.dims
+
         items_a = []
-        for i in range(self.Combo_Altitud.count()):
-            items_a.append(self.Combo_Altitud.itemText(i))
 
-        if prev_alt in items_a:
-            self.Combo_Altitud.setCurrentText(prev_alt)
-        elif self.Combo_Altitud.count() > 0:
-            self.Combo_Altitud.setCurrentIndex(0)
+        if self.alt_raw:
+            for i in range(self.Combo_Altitud.count()):
+                items_a.append(self.Combo_Altitud.itemText(i))
+            if prev_alt_combo in items_a:
+                self.Combo_Altitud.setCurrentText(prev_alt_combo)
+            elif self.Combo_Altitud.count() > 0:
+                self.Combo_Altitud.setCurrentIndex(0)
+                self.Combo_Altitud.setVisible(True)
+                self.Interpolate_Altitude.setVisible(False)
 
-        if "altitude" in self.ds.dims:
-            self.Combo_Altitud.setEnabled(True)
-            self.Combo_Altitud.setStyleSheet("")
-            self.Combo_Altitud.setToolTip("")
+            if has_alt:
+                if self.alt_raw:
+                    self.Combo_Altitud.setEnabled(True)
+                    self.Combo_Altitud.setStyleSheet("")
+                    self.Combo_Altitud.setToolTip("")
+                else:
+                    self.Interpolate_Altitude.setEnabled(True)
+            else:
+                self.Combo_Altitud.setEnabled(False)
+                self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
+                self.Combo_Altitud.setToolTip("NetCDF file does not contain 'altitude' dimension")
+
         else:
-            self.Combo_Altitud.setEnabled(False)
-            self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-            self.Combo_Altitud.setToolTip("NetCDF file does not contain 'altitude' dimension")
+            self.Combo_Altitud.setEnabled(True)
 
         prev_lat_min = self.Combo_Latitud_Min.currentText()
         prev_lat_max = self.Combo_Latitud_Max.currentText()
@@ -345,12 +343,14 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.toggle_altitude_multi()
 
     def toggle_altitude_multi(self):
-        vars_marcadas = [item.data(Qt.UserRole) for item in self.Combo_Variable.selectedItems()]
+        vars_marcadas = []
+        for item in self.Combo_Variable.selectedItems():
+            vars_marcadas.append(item.data(Qt.UserRole))
 
-        if not vars_marcadas:
+        if len(vars_marcadas) == 0:
             self.Combo_Altitud.setEnabled(False)
             self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-            self.Combo_Altitud.setToolTip("Select, at least, one variable")
+            self.Combo_Altitud.setToolTip("Select one variable at least")
             return
 
         for var in vars_marcadas:
@@ -413,6 +413,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Longitud_Min.setCurrentIndex(0)
         if self.Combo_Longitud_Max.count() > 0:
             self.Combo_Longitud_Max.setCurrentIndex(0)
+
+        if self.Check_Mapa.isChecked():
+            self.Check_Mapa.setChecked(False)
 
     def visualizar_variable(self):
         #Main handler for visualizing the selected variable
