@@ -11,7 +11,7 @@ from qgis.core import QgsProject,QgsRasterLayer, QgsLineSymbol,QgsSingleBandPseu
 from osgeo import gdal, osr
 from PyQt5.QtWidgets import QMessageBox, QApplication, QDialog, QDialogButtonBox, QProgressDialog
 from qgis.utils import iface
-from qgis.PyQt.QtGui import QColor
+from qgis.PyQt.QtGui import QColor, QIntValidator
 import xarray as xr
 import numpy as np
 from processing.core.Processing import Processing
@@ -32,7 +32,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.time_step = "1 hour" #Resolution of selected interpolation
 
         self.alt_raw = True
-        self.alt_manual = None
 
         # Base path  where NETCDF and MOLA data store
         self.ruta = r"C:\MCD6.1\data"
@@ -125,6 +124,11 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
         self.Combo_Altitud.setToolTip("Select one variable at least")
 
+        self.Interpolate_Altitude.setEnabled(False)
+        self.Interpolate_Altitude.clear()
+        self.Interpolate_Altitude.setPlaceholderText("Introduce altitude (m)")
+        self.Interpolate_Altitude.setValidator(QIntValidator(5, 108000, self))
+
         self.toggle_altitude_multi()
         self.toggle_map_latlon_mode(self.Check_Mapa.checkState())
 
@@ -137,9 +141,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         if self.alt_raw:
             self.refresh_alt_combo()
-            self.Combo_Altitud.setVisible(True)
-        else:
-           self.Combo_Altitud.setVisible(False)
+
+        self.toggle_altitude_multi()
 
     def refresh_time_combo(self):
         times = self.ds.Time.values.astype(float)
@@ -177,7 +180,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Hora.clear()
         self.Combo_Hora.addItems(labels)
 
-    def refresh_alt_combo(self):
+    def refresh_alt_combo(self): #Repoblate Combo_Altitud when alt_raw is true
 
         if not self.alt_raw:
             return
@@ -271,37 +274,27 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Hora.setCurrentIndex(0)
 
         prev_alt_combo = self.Combo_Altitud.currentText()
-        prev_alt_manual = self.alt_manual
+        prev_alt_manual = self.Interpolate_Altitude.text()
         self.refresh_alt_combo()
 
         has_alt = "altitude" in self.ds.dims
 
         items_a = []
 
-        if self.alt_raw:
-            for i in range(self.Combo_Altitud.count()):
-                items_a.append(self.Combo_Altitud.itemText(i))
-            if prev_alt_combo in items_a:
-                self.Combo_Altitud.setCurrentText(prev_alt_combo)
-            elif self.Combo_Altitud.count() > 0:
-                self.Combo_Altitud.setCurrentIndex(0)
-                self.Combo_Altitud.setVisible(True)
-                self.Interpolate_Altitude.setVisible(False)
+        for i in range(self.Combo_Altitud.count()):
+            items_a.append(self.Combo_Altitud.count())
 
-            if has_alt:
-                if self.alt_raw:
-                    self.Combo_Altitud.setEnabled(True)
-                    self.Combo_Altitud.setStyleSheet("")
-                    self.Combo_Altitud.setToolTip("")
-                else:
-                    self.Interpolate_Altitude.setEnabled(True)
-            else:
-                self.Combo_Altitud.setEnabled(False)
-                self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-                self.Combo_Altitud.setToolTip("NetCDF file does not contain 'altitude' dimension")
-
+        if prev_alt_combo in items_a:
+            self.Combo_Altitud.setCurrentText(prev_alt_combo)
         else:
-            self.Combo_Altitud.setEnabled(True)
+            self.Combo_Altitud.setCurrentIndex(0)
+
+        if not self.alt_raw:
+            self.Interpolate_Altitude.setText(prev_alt_manual)
+        else:
+            self.Interpolate_Altitude.clear()
+
+        self.toggle_altitude_multi()
 
         prev_lat_min = self.Combo_Latitud_Min.currentText()
         prev_lat_max = self.Combo_Latitud_Max.currentText()
@@ -347,23 +340,31 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         for item in self.Combo_Variable.selectedItems():
             vars_marcadas.append(item.data(Qt.UserRole))
 
-        if len(vars_marcadas) == 0:
+        if not vars_marcadas:
             self.Combo_Altitud.setEnabled(False)
             self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
             self.Combo_Altitud.setToolTip("Select one variable at least")
+            self.Interpolate_Altitude.setEnabled(False)
             return
 
         for var in vars_marcadas:
             if var in self.ds.data_vars and "altitude" in self.ds[var].dims:
-                # habilito Altitud y salgo
-                self.Combo_Altitud.setEnabled(True)
-                self.Combo_Altitud.setStyleSheet("")
-                self.Combo_Altitud.setToolTip("")
+                if self.alt_raw:
+                    self.Combo_Altitud.setEnabled(True)
+                    self.Combo_Altitud.setStyleSheet("")
+                    self.Combo_Altitud.setToolTip("")
+                    self.Interpolate_Altitude.setEnabled(False)
+                else:
+                    self.Combo_Altitud.setEnabled(False)
+                    self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
+                    self.Combo_Altitud.setToolTip("Manual mode selected")
+                    self.Interpolate_Altitude.setEnabled(True)
                 return
 
         self.Combo_Altitud.setEnabled(False)
         self.Combo_Altitud.setStyleSheet("QComboBox:disabled { background-color: red }")
-        self.Combo_Altitud.setToolTip("Any variable selected contains 'altitude' dimension")
+        self.Combo_Altitud.setToolTip("No variable selected contains 'altitude' dimension")
+        self.Interpolate_Altitude.setEnabled(False)
 
     def toggle_map_latlon_mode(self, estado):
 
@@ -394,16 +395,18 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.Combo_Hora.count() > 0:
             self.Combo_Hora.setCurrentIndex(0)
 
-        self.time_raw = "True"
+        self.time_raw = True
         self.time_step = "1 hour"
         self.refresh_time_combo()
 
-        if self.Combo_Altitud.isEnabled() and self.Combo_Altitud.count() > 0:
+        self.alt_raw = True
+
+        self.refresh_alt_combo()
+        if self.Combo_Altitud.count() > 0:
             self.Combo_Altitud.setCurrentIndex(0)
 
-        self.alt_raw = "True"
-        self.alt_step = "1 km"
-        self.refresh_alt_combo()
+        self.Interpolate_Altitude.clear()
+        self.toggle_altitude_multi()
 
         if self.Combo_Latitud_Min.count() > 0:
             self.Combo_Latitud_Min.setCurrentIndex(0)
@@ -472,16 +475,18 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             v_high = da.sel(Time = t_min)
                             da = v_low*(1-frac) + v_high*frac
 
-                if "altitude" in da.dims and self.Combo_Altitud.isEnabled():
+                if "altitude" in da.dims:
                     if self.alt_raw:
                         da = da.isel(altitude = self.Combo_Altitud.currentIndex())
                     else:
-                        user_alt = float(self.Combo_Altitud.currentText())
+                        text = self.Interpolate_Altitude.text()
+                        if not text:
+                            QMessageBox.warning(self, "Altitude", "Introduce altitude value in m")
+                            return
 
-                        alt_min = float(self.ds.altitude.values.min())
-                        alt_max = float(self.ds.altitude.values.max())
+                        user_alt_km = float(text) / 1000.0
+                        da = da.interp(altitude = user_alt_km, method = "linear")
 
-                        da = da.interp(altitude = user_alt, method = "linear")
 
                 if not self.Check_Mapa.isChecked():
                     lat_vals = self.ds.latitude.values

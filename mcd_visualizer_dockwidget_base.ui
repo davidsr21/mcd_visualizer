@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>396</width>
-    <height>941</height>
+    <height>923</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -536,7 +536,7 @@
     <property name="geometry">
      <rect>
       <x>220</x>
-      <y>200</y>
+      <y>190</y>
       <width>171</width>
       <height>21</height>
      </rect>
@@ -559,7 +559,7 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>230</x>
+      <x>240</x>
       <y>240</y>
       <width>141</width>
       <height>20</height>
@@ -573,14 +573,14 @@
      </font>
     </property>
     <property name="text">
-     <string>Enter Altitude (m)</string>
+     <string/>
     </property>
    </widget>
    <widget class="QLabel" name="Label_Altitud_4">
     <property name="geometry">
      <rect>
       <x>240</x>
-      <y>220</y>
+      <y>210</y>
       <width>171</width>
       <height>21</height>
      </rect>
@@ -594,7 +594,7 @@
      </font>
     </property>
     <property name="text">
-     <string>Min Altitude (4.5m)</string>
+     <string>Min Altitude (5m)</string>
     </property>
    </widget>
   </widget>

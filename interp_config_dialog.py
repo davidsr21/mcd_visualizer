@@ -11,7 +11,7 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
 
         #If father has not this atributes yet, he uses this values as default
         cfg_raw = getattr(parent, "time_raw", True)
-        cfg_step = getattr (parent, "time_step", "1 Hour")
+        #cfg_step = getattr (parent, "time_step", "1 Hour")
 
         if cfg_raw:
             self.Combo_Time_Mode.setCurrentText("Raw data")
@@ -26,14 +26,11 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
 
         if cfg_alt_raw:
             self.Combo_Altitude_Mode.setCurrentText("Raw data")
-            self.Interpolate_Altitude.setVisible(False)
         else:
             self.Combo_Altitude_Mode.setCurrentText("Interpolate data")
-            self.Interpolate_Altitude.setVisible(True)
 
         #Signal Connections stablished
         self.Combo_Time_Mode.currentTextChanged.connect(self._on_mode_changed)
-        self.Combo_Altitude_Mode.currentTextChanged.connect(self._on_alt_mode_changed)
         self.buttonBox.accepted.connect(self._on_accept)
         self.buttonBox.rejected.connect(self.reject)
 
@@ -52,13 +49,6 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         if not is_interp_time:
             self.Combo_Time_Resolution.setCurrentIndex(0)
 
-    def _on_alt_mode_changed(self, text):
-        """
-        Enables/disables altitude resolution selector depending on Data Input
-        """
-        is_interp_alt = (text == "Interpolate data")
-        self.Interpolate_Altitude.setVisible(is_interp_alt)
-
     def _on_accept(self): #Parent handler
         """
         This function is invocated when Ok buton is pushed:
@@ -69,15 +59,7 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         #Throws new values into main plugin
         p.time_raw = (self.Combo_Time_Mode.currentText() == "Raw data")
         p.time_step = self.Combo_Time_Resolution.currentText()
-        p.alt_raw = (self.Combo_Altitude_Mode.currentText() == "Raw data")
 
-        if not p.alt_raw:
-            try:
-                p.alt_manual = float(self.Interpolate_Altitude.text())
-            except ValueError:
-                QtWidgets.QMessageBox.warning(self, "Altitude", "Introduce altitude number in meters")
-                return
-        else:
-            p.alt_manual = None
+        p.alt_raw = (self.Combo_Altitude_Mode.currentText() == "Raw data")
 
         self.accept()
