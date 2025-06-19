@@ -127,7 +127,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Interpolate_Altitude.setEnabled(False)
         self.Interpolate_Altitude.clear()
         self.Interpolate_Altitude.setPlaceholderText("Introduce altitude (m)")
-        self.Interpolate_Altitude.setValidator(QIntValidator(5, 108000, self))
 
         self.toggle_altitude_multi()
         self.toggle_map_latlon_mode(self.Check_Mapa.checkState())
@@ -207,7 +206,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         folder = os.path.join(self.ruta, carpeta)
 
         try:
-            archivos = sorted(f for f in os.listdir(folder) if f.endswith("_me.nc"))
+            archivos = sorted(f for f in os.listdir(folder) if f.endswith("_me.nc") and "thermo" not in f.lower())
         except FileNotFoundError:
             QMessageBox.warning(self, "Error", "Folder not found")
             return
@@ -484,7 +483,21 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                             QMessageBox.warning(self, "Altitude", "Introduce altitude value in m")
                             return
 
-                        user_alt_km = float(text) / 1000.0
+                        #Forcing value to be in altitude limits coming from NetCDF data
+                        if not text.isdigit():
+                            QMessageBox.warning(self, "Altitude", "Do not introduce decimal values")
+                            return
+
+                        v = int(text)
+
+                        if v < 5:
+                            v = 5
+                        elif v > 108000:
+                            v = 108000
+
+                        self.Interpolate_Altitude.setText(str(v))
+
+                        user_alt_km = v / 1000.0
                         da = da.interp(altitude = user_alt_km, method = "linear")
 
 

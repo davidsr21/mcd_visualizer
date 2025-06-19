@@ -326,22 +326,27 @@
    </property>
    <item>
     <property name="text">
-     <string>1 km</string>
+     <string>200 km</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>0.5 km</string>
+     <string>100 km</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>0.25 km</string>
+     <string>50 km</string>
     </property>
    </item>
    <item>
     <property name="text">
-     <string>0.1 km</string>
+     <string>25 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>10 km</string>
     </property>
    </item>
   </widget>
@@ -433,41 +438,6 @@
     </property>
    </item>
   </widget>
-  <widget class="QComboBox" name="Combo_Longitude_Resolution">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>410</y>
-     <width>151</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <pointsize>12</pointsize>
-    </font>
-   </property>
-   <item>
-    <property name="text">
-     <string>1 km</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>0.5 km</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>0.25 km</string>
-    </property>
-   </item>
-   <item>
-    <property name="text">
-     <string>0.1 km</string>
-    </property>
-   </item>
-  </widget>
   <widget class="QLabel" name="Label_Hora_Interp_4">
    <property name="geometry">
     <rect>
@@ -530,6 +500,46 @@
    <property name="text">
     <string>the desired altitude to display</string>
    </property>
+  </widget>
+  <widget class="QComboBox" name="Combo_Longitude_Resolution">
+   <property name="geometry">
+    <rect>
+     <x>260</x>
+     <y>410</y>
+     <width>151</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <item>
+    <property name="text">
+     <string>200 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>100 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>50 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>25 km</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>10 km</string>
+    </property>
+   </item>
   </widget>
  </widget>
  <resources/>

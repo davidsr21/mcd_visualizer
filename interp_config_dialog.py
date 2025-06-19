@@ -11,7 +11,6 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
 
         #If father has not this atributes yet, he uses this values as default
         cfg_raw = getattr(parent, "time_raw", True)
-        #cfg_step = getattr (parent, "time_step", "1 Hour")
 
         if cfg_raw:
             self.Combo_Time_Mode.setCurrentText("Raw data")
