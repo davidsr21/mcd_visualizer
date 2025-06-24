@@ -28,8 +28,31 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         else:
             self.Combo_Altitude_Mode.setCurrentText("Interpolate data")
 
+        cfg_lat_raw = getattr(parent, "lat_raw", True)
+        cfg_lon_raw = getattr(parent, "lon_raw", True)
+
+        if cfg_lat_raw:
+            self.Combo_Latitude_Mode.setCurrentText("Raw data")
+            self.Combo_Latitude_Resolution.setEnabled(False)
+            self.Combo_Latitude_Resolution.setCurrentText("2º")
+        else:
+            self.Combo_Latitude_Mode.setCurrentText("Interpolate data")
+            self.Combo_Latitude_Resolution.setEnabled(True)
+            self.Combo_Latitude_Resolution.setCurrentText("2º")
+
+        if cfg_lon_raw:
+            self.Combo_Longitude_Mode.setCurrentText("Raw data")
+            self.Combo_Longitude_Resolution.setEnabled(False)
+            self.Combo_Longitude_Resolution.setCurrentText("2º")
+        else:
+            self.Combo_Longitude_Mode.setCurrentText("Interpolate data")
+            self.Combo_Longitude_Resolution.setEnabled(True)
+            self.Combo_Longitude_Resolution.setCurrentText("2º")
+
         #Signal Connections stablished
         self.Combo_Time_Mode.currentTextChanged.connect(self._on_mode_changed)
+        self.Combo_Latitude_Mode.currentTextChanged.connect(self._on_lat_mode_changed)
+        self.Combo_Longitude_Mode.currentTextChanged.connect(self._on_lon_mode_changed)
         self.buttonBox.accepted.connect(self._on_accept)
         self.buttonBox.rejected.connect(self.reject)
 
@@ -48,6 +71,26 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         if not is_interp_time:
             self.Combo_Time_Resolution.setCurrentIndex(0)
 
+    def _on_lat_mode_changed(self, text):
+        """
+        Enables/disables latitude resolution selector depending on Data Input
+        """
+        is_interp_lat = (text == "Interpolate data")
+        self.Combo_Latitude_Resolution.setEnabled(is_interp_lat)
+
+        if not is_interp_lat:
+            self.Combo_Latitude_Resolution.setCurrentIndex(0)
+
+    def _on_lon_mode_changed(self, text):
+        """
+        Enables/disables latitude resolution selector depending on Data Input
+        """
+        is_interp_lon = (text == "Interpolate data")
+        self.Combo_Longitude_Resolution.setEnabled(is_interp_lon)
+
+        if not is_interp_lon:
+            self.Combo_Longitude_Resolution.setCurrentIndex(0)
+
     def _on_accept(self): #Parent handler
         """
         This function is invocated when Ok buton is pushed:
@@ -60,5 +103,11 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         p.time_step = self.Combo_Time_Resolution.currentText()
 
         p.alt_raw = (self.Combo_Altitude_Mode.currentText() == "Raw data")
+
+        p.lat_raw = (self.Combo_Latitude_Mode.currentText() == "Raw data")
+        p.lat_step = self.Combo_Latitude_Resolution.currentText()
+
+        p.lon_raw = (self.Combo_Longitude_Mode.currentText() == "Raw data")
+        p.lon_step = self.Combo_Longitude_Resolution.currentText()
 
         self.accept()

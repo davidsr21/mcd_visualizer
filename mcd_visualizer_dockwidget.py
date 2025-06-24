@@ -33,6 +33,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.alt_raw = True
 
+        self.lat_raw = True
+        self.lat_step = "2"
+
+        self.lon_raw = True
+        self.lon_step = "2"
+
         # Base path  where NETCDF and MOLA data store
         self.ruta = r"C:\MCD6.1\data"
         # Dictionary mapping human-readable era names to actual folder names
@@ -143,6 +149,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.toggle_altitude_multi()
 
+        self.refresh_lat_combo()
+        self.refresh_lon_combo()
+
     def refresh_time_combo(self):
         times = self.ds.Time.values.astype(float)
         t_min = times.min()
@@ -192,6 +201,74 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.Combo_Altitud.clear()
         self.Combo_Altitud.addItems(labels)
+
+    def refresh_lat_combo(self):
+        lats = self.ds.latitude.values.astype(float)
+        lat_min = lats.min()
+        lat_max = lats.max()
+
+        if self.lat_raw:
+            grid = lats
+        else:
+            if self.lat_step == "2":
+                step = 2
+            elif self.lat_step == "1":
+                step = 1
+            elif self.lat_step == "0.5":
+                step = 0.5
+            elif self.lat_step == "0.25":
+                step = 0.25
+            elif self.lat_step == "0.1":
+                step = 0.1
+            else:
+                step = 1.0
+
+            extra = np.arange(step, lat_min, step)
+            main = np.arange(lat_min, lat_max + 1e-6, step)
+            grid = np.concatenate([extra, main])
+
+        labels = []
+        for v in grid:
+            labels.append(f"{v:.4f}")
+
+        self.Combo_Latitud_Min.clear()
+        self.Combo_Latitud_Min.addItems(labels)
+        self.Combo_Latitud_Max.clear()
+        self.Combo_Latitud_Max.addItems(labels)
+
+    def refresh_lon_combo(self):
+        lons = self.ds.longitude.values.astype(float)
+        lon_min = lons.min()
+        lon_max = lons.max()
+
+        if self.lon_raw:
+            grid = lons
+        else:
+            if self.lon_step == "2":
+                step = 2
+            elif self.lon_step == "1":
+                step = 1
+            elif self.lon_step == "0.5":
+                step = 0.5
+            elif self.lon_step == "0.25":
+                step = 0.25
+            elif self.lon_step == "0.1":
+                step = 0.1
+            else:
+                step = 1.0
+
+            extra = np.arange(step, lon_min, step)
+            main = np.arange(lon_min, lon_max + 1e-6, step)
+            grid = np.concatenate([extra, main])
+
+        labels = []
+        for v in grid:
+            labels.append(f"{v:.4f}")
+
+        self.Combo_Longitud_Min.clear()
+        self.Combo_Longitud_Min.addItems(labels)
+        self.Combo_Longitud_Max.clear()
+        self.Combo_Longitud_Max.addItems(labels)
 
     def cambio_epoca(self, epoca):
         #Handler for when the era combo changes: populate the file list
@@ -293,44 +370,32 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             self.Interpolate_Altitude.clear()
 
-        self.toggle_altitude_multi()
-
         prev_lat_min = self.Combo_Latitud_Min.currentText()
         prev_lat_max = self.Combo_Latitud_Max.currentText()
         prev_lon_min = self.Combo_Longitud_Min.currentText()
         prev_lon_max = self.Combo_Longitud_Max.currentText()
 
-        lat_vals = [f"{lat:.4f}" for lat in self.ds.latitude.values]
-        self.Combo_Latitud_Min.clear()
-        self.Combo_Latitud_Max.clear()
-        self.Combo_Latitud_Min.addItems(lat_vals)
-        self.Combo_Latitud_Max.addItems(lat_vals)
-        if prev_lat_min in lat_vals:
-            self.Combo_Latitud_Min.setCurrentText(prev_lat_min)
-        else:
-            if len(lat_vals) > 0:
-                self.Combo_Latitud_Min.setCurrentIndex(0)
-        if prev_lat_max in lat_vals:
-            self.Combo_Latitud_Max.setCurrentText(prev_lat_max)
-        else:
-            if len(lat_vals) > 0:
-                self.Combo_Latitud_Max.setCurrentIndex(0)
+        self.refresh_lat_combo()
+        self.refresh_lon_combo()
 
-        lon_vals = [f"{lon:.4f}" for lon in self.ds.longitude.values]
-        self.Combo_Longitud_Min.clear()
-        self.Combo_Longitud_Max.clear()
-        self.Combo_Longitud_Min.addItems(lon_vals)
-        self.Combo_Longitud_Max.addItems(lon_vals)
-        if prev_lon_min in lon_vals:
+        items_lat = []
+        items_lon = []
+
+        for i in range(self.Combo_Latitud_Min.count()):
+            items_lat.append(self.Combo_Latitud_Min.itemText(i))
+
+        if prev_lat_min in items_lat:
+            self.Combo_Latitud_Min.setCurrentText(prev_lat_min)
+        if prev_lat_max in items_lat:
+            self.Combo_Latitud_Max.setCurrentText(prev_lat_max)
+
+        for i in range(self.Combo_Longitud_Min.count()):
+            items_lon.append(self.Combo_Longitud_Min.itemText(i))
+
+        if prev_lon_min in items_lon:
             self.Combo_Longitud_Min.setCurrentText(prev_lon_min)
-        else:
-            if len(lon_vals) > 0:
-                self.Combo_Longitud_Min.setCurrentIndex(0)
-        if prev_lon_max in lon_vals:
+        if prev_lon_max in items_lon:
             self.Combo_Longitud_Max.setCurrentText(prev_lon_max)
-        else:
-            if len(lon_vals) > 0:
-                self.Combo_Longitud_Max.setCurrentIndex(0)
 
         self.toggle_altitude_multi()
 
