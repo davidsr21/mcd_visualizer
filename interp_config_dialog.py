@@ -10,16 +10,17 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         self.setupUi(self)
 
         #If father has not this atributes yet, he uses this values as default
-        cfg_raw = getattr(parent, "time_raw", True)
+        cfg_time_raw = getattr(parent, "time_raw", True)
+        cfg_time_step = getattr(parent, "time_step", "1 hour")
 
-        if cfg_raw:
+        if cfg_time_raw:
             self.Combo_Time_Mode.setCurrentText("Raw data")
             self.Combo_Time_Resolution.setEnabled(False)
-            self.Combo_Time_Resolution.setCurrentText("1 hour")
         else:
             self.Combo_Time_Mode.setCurrentText("Interpolate data")
             self.Combo_Time_Resolution.setEnabled(True)
-            self.Combo_Time_Resolution.setCurrentText("1 hour")
+
+        self.Combo_Time_Resolution.setCurrentText(cfg_time_step)
 
         cfg_alt_raw = getattr(parent, "alt_raw", True)
 
@@ -29,25 +30,27 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
             self.Combo_Altitude_Mode.setCurrentText("Interpolate data")
 
         cfg_lat_raw = getattr(parent, "lat_raw", True)
+        cfg_lat_step = getattr(parent, "lat_step", "2")
         cfg_lon_raw = getattr(parent, "lon_raw", True)
+        cfg_lon_step = getattr(parent, "lon_step", "2")
 
         if cfg_lat_raw:
             self.Combo_Latitude_Mode.setCurrentText("Raw data")
             self.Combo_Latitude_Resolution.setEnabled(False)
-            self.Combo_Latitude_Resolution.setCurrentText("2º")
         else:
             self.Combo_Latitude_Mode.setCurrentText("Interpolate data")
             self.Combo_Latitude_Resolution.setEnabled(True)
-            self.Combo_Latitude_Resolution.setCurrentText("2º")
+
+        self.Combo_Latitude_Resolution.setCurrentText(cfg_lat_step)
 
         if cfg_lon_raw:
             self.Combo_Longitude_Mode.setCurrentText("Raw data")
             self.Combo_Longitude_Resolution.setEnabled(False)
-            self.Combo_Longitude_Resolution.setCurrentText("2º")
         else:
             self.Combo_Longitude_Mode.setCurrentText("Interpolate data")
             self.Combo_Longitude_Resolution.setEnabled(True)
-            self.Combo_Longitude_Resolution.setCurrentText("2º")
+
+        self.Combo_Longitude_Resolution.setCurrentText(cfg_lon_step)
 
         #Signal Connections stablished
         self.Combo_Time_Mode.currentTextChanged.connect(self._on_mode_changed)
