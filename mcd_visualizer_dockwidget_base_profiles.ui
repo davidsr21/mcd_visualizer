@@ -37,8 +37,8 @@
    <widget class="QTabWidget" name="Tab">
     <property name="geometry">
      <rect>
-      <x>6</x>
-      <y>-1</y>
+      <x>0</x>
+      <y>0</y>
       <width>391</width>
       <height>781</height>
      </rect>
@@ -52,7 +52,7 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="Map_Tool">
      <attribute name="title">
@@ -62,7 +62,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>0</y>
+        <y>20</y>
         <width>111</width>
         <height>41</height>
        </rect>
@@ -83,7 +83,7 @@
       <property name="geometry">
        <rect>
         <x>160</x>
-        <y>0</y>
+        <y>20</y>
         <width>211</width>
         <height>41</height>
        </rect>
@@ -104,7 +104,7 @@
       <property name="geometry">
        <rect>
         <x>280</x>
-        <y>40</y>
+        <y>60</y>
         <width>81</width>
         <height>20</height>
        </rect>
@@ -126,7 +126,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>40</y>
+        <y>60</y>
         <width>111</width>
         <height>21</height>
        </rect>
@@ -148,7 +148,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>70</y>
+        <y>90</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -246,7 +246,7 @@
       <property name="geometry">
        <rect>
         <x>220</x>
-        <y>70</y>
+        <y>90</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -263,7 +263,7 @@
      <widget class="QLabel" name="Label_Altitud_10">
       <property name="geometry">
        <rect>
-        <x>230</x>
+        <x>240</x>
         <y>180</y>
         <width>171</width>
         <height>21</height>
@@ -285,7 +285,7 @@
      <widget class="QLabel" name="Label_Altitud_6">
       <property name="geometry">
        <rect>
-        <x>210</x>
+        <x>220</x>
         <y>200</y>
         <width>171</width>
         <height>21</height>
@@ -331,8 +331,8 @@
      <widget class="QLabel" name="Label_Altitud_7">
       <property name="geometry">
        <rect>
-        <x>230</x>
-        <y>110</y>
+        <x>170</x>
+        <y>150</y>
         <width>131</width>
         <height>21</height>
        </rect>
@@ -347,14 +347,14 @@
        </font>
       </property>
       <property name="text">
-       <string>In km if &quot;Raw Data&quot;</string>
+       <string>Unit: km</string>
       </property>
      </widget>
      <widget class="QLabel" name="Label_Altitud_9">
       <property name="geometry">
        <rect>
-        <x>250</x>
-        <y>90</y>
+        <x>260</x>
+        <y>120</y>
         <width>71</width>
         <height>21</height>
        </rect>
@@ -375,8 +375,8 @@
      <widget class="QComboBox" name="Combo_Altitud">
       <property name="geometry">
        <rect>
-        <x>220</x>
-        <y>140</y>
+        <x>230</x>
+        <y>150</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -398,8 +398,8 @@
      <widget class="QComboBox" name="Combo_Longitud_Max">
       <property name="geometry">
        <rect>
-        <x>200</x>
-        <y>330</y>
+        <x>210</x>
+        <y>340</y>
         <width>141</width>
         <height>22</height>
        </rect>
@@ -421,8 +421,8 @@
      <widget class="QLabel" name="Label_Hora_Local">
       <property name="geometry">
        <rect>
-        <x>30</x>
-        <y>100</y>
+        <x>40</x>
+        <y>120</y>
         <width>111</width>
         <height>21</height>
        </rect>
@@ -443,8 +443,8 @@
      <widget class="QComboBox" name="Combo_Longitud_Min">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>330</y>
+        <x>20</x>
+        <y>340</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -466,8 +466,8 @@
      <widget class="QLabel" name="Label_Longitud">
       <property name="geometry">
        <rect>
-        <x>140</x>
-        <y>300</y>
+        <x>150</x>
+        <y>310</y>
         <width>101</width>
         <height>21</height>
        </rect>
@@ -485,33 +485,11 @@
        <string>Longitude</string>
       </property>
      </widget>
-     <widget class="QLabel" name="Label_Altitud_8">
-      <property name="geometry">
-       <rect>
-        <x>200</x>
-        <y>160</y>
-        <width>171</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-        <underline>false</underline>
-        <kerning>true</kerning>
-       </font>
-      </property>
-      <property name="text">
-       <string>In m if &quot;Interpolate Data&quot;</string>
-      </property>
-     </widget>
      <widget class="QLabel" name="Label_Latitud">
       <property name="geometry">
        <rect>
-        <x>150</x>
-        <y>240</y>
+        <x>160</x>
+        <y>250</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -532,8 +510,8 @@
      <widget class="QComboBox" name="Combo_Latitud_Min">
       <property name="geometry">
        <rect>
-        <x>10</x>
-        <y>270</y>
+        <x>20</x>
+        <y>280</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -555,8 +533,8 @@
      <widget class="QComboBox" name="Combo_Latitud_Max">
       <property name="geometry">
        <rect>
-        <x>200</x>
-        <y>270</y>
+        <x>210</x>
+        <y>280</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -578,8 +556,8 @@
      <widget class="QComboBox" name="Combo_Hora">
       <property name="geometry">
        <rect>
-        <x>0</x>
-        <y>130</y>
+        <x>10</x>
+        <y>150</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -606,7 +584,7 @@
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>360</y>
+        <y>370</y>
         <width>351</width>
         <height>21</height>
        </rect>
@@ -628,7 +606,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>420</y>
+        <y>430</y>
         <width>371</width>
         <height>251</height>
        </rect>
@@ -652,7 +630,7 @@
       <property name="geometry">
        <rect>
         <x>80</x>
-        <y>680</y>
+        <y>690</y>
         <width>211</width>
         <height>61</height>
        </rect>
@@ -673,7 +651,7 @@
       <property name="geometry">
        <rect>
         <x>60</x>
-        <y>380</y>
+        <y>400</y>
         <width>281</width>
         <height>31</height>
        </rect>
@@ -691,11 +669,718 @@
        <string>Select Variables to Display</string>
       </property>
      </widget>
+     <widget class="QLabel" name="Label_Altitud_8">
+      <property name="geometry">
+       <rect>
+        <x>180</x>
+        <y>220</y>
+        <width>51</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>false</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Unit: m</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="Profile_Tool">
      <attribute name="title">
       <string>Profile Tool</string>
      </attribute>
+     <widget class="QLabel" name="Label_Epoca_2">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>50</y>
+        <width>111</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Year Time</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Archivo_2">
+      <property name="geometry">
+       <rect>
+        <x>290</x>
+        <y>50</y>
+        <width>81</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>File</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Push_Reset_Profile">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>10</y>
+        <width>111</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>RESET</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="Combo_Epoca_Profile">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>80</y>
+        <width>141</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <item>
+       <property name="text">
+        <string>Yearly Average</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Cold</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Warm</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Stormy</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 24 </string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 25</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 26</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 27</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 28</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 29</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 30</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 31</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 32</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 33</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 34</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Martian Year 35</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QPushButton" name="Push_InterpConfig_Profile">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>10</y>
+        <width>211</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>8</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>INTERPOLATION CONFIGURATION</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="Combo_Archivo_Profile">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>80</y>
+        <width>141</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Altitud_12">
+      <property name="geometry">
+       <rect>
+        <x>220</x>
+        <y>270</y>
+        <width>171</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>false</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Min Altitude (5m)</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="Interpolate_Altitude_Profile">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>310</y>
+        <width>141</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Hora_Local_2">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>210</y>
+        <width>111</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Local Time</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Altitud_13">
+      <property name="geometry">
+       <rect>
+        <x>200</x>
+        <y>290</y>
+        <width>171</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>false</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Max Altitude (108000m)</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Altitud_14">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>210</y>
+        <width>71</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Altitude</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="Combo_Altitud_Profile">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>240</y>
+        <width>141</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <item>
+       <property name="text">
+        <string/>
+       </property>
+      </item>
+     </widget>
+     <widget class="QComboBox" name="Combo_Hora_Profile">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>240</y>
+        <width>141</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+      <property name="maxVisibleItems">
+       <number>12</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Latitud_2">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>350</y>
+        <width>91</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Latitude</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Longitud_2">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>350</y>
+        <width>101</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Longitude</string>
+      </property>
+     </widget>
+     <widget class="QListWidget" name="Combo_Variable_Profile">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>440</y>
+        <width>371</width>
+        <height>241</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::ClickFocus</enum>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::MultiSelection</enum>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="Combo_Latitud_Profile">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>380</y>
+        <width>141</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Variable_2">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>410</y>
+        <width>311</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Select Variable to Display (if chosen)</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="Combo_Longitud_Profile">
+      <property name="geometry">
+       <rect>
+        <x>220</x>
+        <y>380</y>
+        <width>141</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="Push_Visualizar_Profile">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>690</y>
+        <width>211</width>
+        <height>61</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>20</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Visualize</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Epoca_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>130</y>
+        <width>151</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Variable on X Axis</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Epoca_4">
+      <property name="geometry">
+       <rect>
+        <x>220</x>
+        <y>130</y>
+        <width>151</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Variable on Y Axis</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Altitud_16">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>310</y>
+        <width>51</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>false</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Unit: m</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Altitud_17">
+      <property name="geometry">
+       <rect>
+        <x>150</x>
+        <y>240</y>
+        <width>51</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>false</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Unit: km</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="Combo_Profile_X">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>160</y>
+        <width>141</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <item>
+       <property name="text">
+        <string>Local Time</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Altitude</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Latitude</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Longitude</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Variable</string>
+       </property>
+      </item>
+     </widget>
+     <widget class="QComboBox" name="Combo_Profile_Y">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>160</y>
+        <width>141</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <item>
+       <property name="text">
+        <string>Local Time</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Altitude</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Latitude</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Longitude</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Variable</string>
+       </property>
+      </item>
+     </widget>
     </widget>
    </widget>
   </widget>
