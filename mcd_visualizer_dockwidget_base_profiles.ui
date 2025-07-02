@@ -700,7 +700,7 @@
       <property name="geometry">
        <rect>
         <x>40</x>
-        <y>50</y>
+        <y>60</y>
         <width>111</width>
         <height>21</height>
        </rect>
@@ -722,7 +722,7 @@
       <property name="geometry">
        <rect>
         <x>290</x>
-        <y>50</y>
+        <y>60</y>
         <width>81</width>
         <height>20</height>
        </rect>
@@ -765,7 +765,7 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>80</y>
+        <y>90</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -884,7 +884,7 @@
       <property name="geometry">
        <rect>
         <x>230</x>
-        <y>80</y>
+        <y>90</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -926,7 +926,7 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>210</x>
+        <x>220</x>
         <y>310</y>
         <width>141</width>
         <height>20</height>
@@ -1013,7 +1013,7 @@
      <widget class="QComboBox" name="Combo_Altitud_Profile">
       <property name="geometry">
        <rect>
-        <x>210</x>
+        <x>220</x>
         <y>240</y>
         <width>141</width>
         <height>20</height>
@@ -1036,7 +1036,7 @@
      <widget class="QComboBox" name="Combo_Hora_Profile">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>240</y>
         <width>141</width>
         <height>20</height>
@@ -1063,8 +1063,8 @@
      <widget class="QLabel" name="Label_Latitud_2">
       <property name="geometry">
        <rect>
-        <x>30</x>
-        <y>350</y>
+        <x>40</x>
+        <y>340</y>
         <width>91</width>
         <height>21</height>
        </rect>
@@ -1085,8 +1085,8 @@
      <widget class="QLabel" name="Label_Longitud_2">
       <property name="geometry">
        <rect>
-        <x>240</x>
-        <y>350</y>
+        <x>250</x>
+        <y>340</y>
         <width>101</width>
         <height>21</height>
        </rect>
@@ -1125,14 +1125,14 @@
        <enum>Qt::ClickFocus</enum>
       </property>
       <property name="selectionMode">
-       <enum>QAbstractItemView::MultiSelection</enum>
+       <enum>QAbstractItemView::SingleSelection</enum>
       </property>
      </widget>
      <widget class="QComboBox" name="Combo_Latitud_Profile">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>380</y>
+        <y>370</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -1149,9 +1149,9 @@
      <widget class="QLabel" name="Label_Variable_2">
       <property name="geometry">
        <rect>
-        <x>40</x>
-        <y>410</y>
-        <width>311</width>
+        <x>100</x>
+        <y>400</y>
+        <width>211</width>
         <height>31</height>
        </rect>
       </property>
@@ -1165,14 +1165,14 @@
        </font>
       </property>
       <property name="text">
-       <string>Select Variable to Display (if chosen)</string>
+       <string>Select Variable to Display</string>
       </property>
      </widget>
      <widget class="QComboBox" name="Combo_Longitud_Profile">
       <property name="geometry">
        <rect>
         <x>220</x>
-        <y>380</y>
+        <y>370</y>
         <width>141</width>
         <height>22</height>
        </rect>
@@ -1254,7 +1254,7 @@
      <widget class="QLabel" name="Label_Altitud_16">
       <property name="geometry">
        <rect>
-        <x>150</x>
+        <x>160</x>
         <y>310</y>
         <width>51</width>
         <height>21</height>
@@ -1276,7 +1276,7 @@
      <widget class="QLabel" name="Label_Altitud_17">
       <property name="geometry">
        <rect>
-        <x>150</x>
+        <x>160</x>
         <y>240</y>
         <width>51</width>
         <height>21</height>
@@ -1312,6 +1312,11 @@
         <kerning>true</kerning>
        </font>
       </property>
+      <item>
+       <property name="text">
+        <string>N/A</string>
+       </property>
+      </item>
       <item>
        <property name="text">
         <string>Local Time</string>
@@ -1355,6 +1360,11 @@
         <kerning>true</kerning>
        </font>
       </property>
+      <item>
+       <property name="text">
+        <string>N/A</string>
+       </property>
+      </item>
       <item>
        <property name="text">
         <string>Local Time</string>

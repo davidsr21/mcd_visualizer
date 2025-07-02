@@ -149,6 +149,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.cambio_epoca_profile(self.Combo_Epoca_Profile.currentText())
 
+        self.Combo_Profile_X.currentIndexChanged.connect(self.on_profile_axes_changed)
+        self.Combo_Profile_Y.currentIndexChanged.connect(self.on_profile_axes_changed)
+
     def open_interp_config(self):
         prev_time_raw = self.time_raw
         prev_time_step = self.time_step
@@ -860,3 +863,160 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.cambio_archivo_profile(current)
 
     def cambio_archivo_profile(self, archivo_nombre):
+        if not archivo_nombre:
+            return
+
+        epoca_label = self.Combo_Epoca_Profile.currentText()
+        carpeta = self.lista_carpetas.get(epoca_label)
+        if not carpeta:
+            return
+
+        path = os.path.join(self.ruta, carpeta, archivo_nombre)
+        try:
+            ds_nuevo = xr.open_dataset(path, decode_times=False)
+        except Exception as e:
+            QMessageBox.critical(self, "Error al abrir NetCDF", str(e))
+            return
+
+        self.ds = ds_nuevo
+
+        prev_vars = [item.data(Qt.UserRole) for item in self.Combo_Variable_Profile.selectedItems()] #We save already selected variables for its name in "crude"
+        self.Combo_Variable_Profile.clear()
+
+        for varname in self.ds.data_vars.keys():
+            data_array = self.ds[varname]
+            if("latitude" in data_array.dims) and ("longitude" in data_array.dims): #I just want to have variables that contain latitude and longitude dimensions. Otherwise, none of my interest
+                if varname in self.variable_descriptions:
+                    label = self.variable_descriptions[varname] # I assign a "human" name to thoses varnames (e.g. temp = "Surface Temparature (K)")
+                    item = QtWidgets.QListWidgetItem(label)
+                else:
+                    item = QtWidgets.QListWidgetItem(f"ERROR: {varname}")
+                    item.setForeGround(QColor("red"))
+
+                item.setData(Qt.UserRole, varname)
+                self.Combo_Variable_Profile.addItem(item)
+
+        for i in range(self.Combo_Variable_Profile.count()):
+            itm = self.Combo_Variable_Profile.item(i)
+            if itm.data(Qt.UserRole) in prev_vars:
+                itm.setSelected(True)
+
+        prev_hora = self.Combo_Hora_Profile.currentText()
+        time_vals = [str(int(t)) for t in self.ds.Time.values]
+
+        self.Combo_Hora_Profile.clear()
+        self.Combo_Hora_Profile.addItems(time_vals)
+
+        if prev_hora in time_vals:
+            self.Combo_Hora_Profile.setCurrentText(prev_hora)
+        else:
+            if len(time_vals) > 0:
+                self.Combo_Hora_Profile.setCurrentIndex(0)
+
+        prev_alt = self.Combo_Altitud_Profile.currentText()
+
+        if "altitude" in self.ds.coords or "altitude" in self.ds.dims:
+            alt_vals = [f"{a:.4f}" for a in self.ds.altitude.values]
+
+            self.Combo_Altitud_Profile.clear()
+            self.Combo_Altitud_Profile.addItems(alt_vals)
+
+            if prev_alt in alt_vals:
+                self.Combo_Altitud_Profile.setCurrentText(prev_alt)
+            else:
+                if len(alt_vals) > 0:
+                    self.Combo_Altitud_Profile.setCurrentIndex(0)
+            self.Combo_Altitud_Profile.setEnabled(True)
+            self.Combo_Altitud_Profile.setStyleSheet("")
+            self.Combo_Altitud_Profile.setToolTip("")
+        else:
+            self.Combo_Altitud_Profile.setEnabled(False)
+            self.Combo_Altitud_Profile.setStyleSheet("QComboBox:disabled { background-color: red }")
+            self.Combo_Altitud_Profile.setToolTip("NetCDF file does not contain 'altitude' dimension")
+
+        prev_lat = self.Combo_Latitud_Profile.currentText()
+        lat_vals = [f"{lat:.4f}" for lat in self.ds.latitude.values]
+
+        self.Combo_Latitud_Profile.clear()
+        self.Combo_Latitud_Profile.addItems(lat_vals)
+
+        if prev_lat in lat_vals:
+            self.Combo_Latitud_Profile.setCurrentText(prev_lat)
+        else:
+            if len(lat_vals) > 0:
+                self.Combo_Latitud_Profile.setCurrentIndex(0)
+
+        prev_lon = self.Combo_Longitud_Profile.currentText()
+        lon_vals = [f"{lon:.4f}" for lon in self.ds.longitude.values]
+
+        self.Combo_Longitud_Profile.clear()
+        self.Combo_Longitud_Profile.addItems(lon_vals)
+
+        if prev_lon in lon_vals:
+            self.Combo_Longitud_Profile.setCurrentText(prev_lon)
+        else:
+            if len(lon_vals) > 0:
+                self.Combo_Longitud_Profile.setCurrentIndex(0)
+
+    def on_profile_axes_changed(self, idx):
+        combo = self.sender()
+
+        x = self.Combo_Profile_X.currentText()
+        y = self.Combo_Profile_Y.currentText()
+
+        # — Warning si coinciden —
+        if x == y:
+            QMessageBox.warning(self,"Profile","Axis Variable X cannot be the same as Axis Variable Y")
+
+            combo.setCurrentIndex(0)
+            return
+
+        # — Local Time —
+        if x == "Local Time" or y == "Local Time":
+            self.Combo_Hora_Profile.setEnabled(False)
+            self.Combo_Hora_Profile.setStyleSheet("QComboBox{background:red}")
+            self.Combo_Hora_Profile.setToolTip("Local Time locked as axis")
+        else:
+            self.Combo_Hora_Profile.setEnabled(True)
+            self.Combo_Hora_Profile.setStyleSheet("")
+            self.Combo_Hora_Profile.setToolTip("")
+
+        # — Altitude —
+        if x == "Altitude" or y == "Altitude":
+            self.Combo_Altitud_Profile.setEnabled(False)
+            self.Combo_Altitud_Profile.setStyleSheet("QComboBox{background:red}")
+            self.Combo_Altitud_Profile.setToolTip("Altitude locked as axis")
+        else:
+            self.Combo_Altitud_Profile.setEnabled(True)
+            self.Combo_Altitud_Profile.setStyleSheet("")
+            self.Combo_Altitud_Profile.setToolTip("")
+
+        # — Latitude —
+        if x == "Latitude" or y == "Latitude":
+            self.Combo_Latitud_Profile.setEnabled(False)
+            self.Combo_Latitud_Profile.setStyleSheet("QComboBox{background:red}")
+            self.Combo_Latitud_Profile.setToolTip("Latitude locked as axis")
+        else:
+            self.Combo_Latitud_Profile.setEnabled(True)
+            self.Combo_Latitud_Profile.setStyleSheet("")
+            self.Combo_Latitud_Profile.setToolTip("")
+
+        # — Longitude —
+        if x == "Longitude" or y == "Longitude":
+            self.Combo_Longitud_Profile.setEnabled(False)
+            self.Combo_Longitud_Profile.setStyleSheet("QComboBox{background:red}")
+            self.Combo_Longitud_Profile.setToolTip("Longitude locked as axis")
+        else:
+            self.Combo_Longitud_Profile.setEnabled(True)
+            self.Combo_Longitud_Profile.setStyleSheet("")
+            self.Combo_Longitud_Profile.setToolTip("")
+
+        if x == "Variable" or y == "Variable":
+            self.Combo_Variable_Profile.setEnabled(True)
+            self.Combo_Variable_Profile.setStyleSheet("")
+            self.Combo_Variable_Profile.setToolTip("")
+        else:
+            self.Combo_Variable_Profile.setEnabled(False)
+            self.Combo_Variable_Profile.setToolTip("Cannot pick other variables when neither axis is 'Variable'")
+
+
