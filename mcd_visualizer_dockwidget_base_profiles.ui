@@ -1013,9 +1013,9 @@
      <widget class="QComboBox" name="Combo_Altitud_Profile">
       <property name="geometry">
        <rect>
-        <x>220</x>
+        <x>230</x>
         <y>240</y>
-        <width>141</width>
+        <width>131</width>
         <height>20</height>
        </rect>
       </property>
@@ -1171,9 +1171,9 @@
      <widget class="QComboBox" name="Combo_Longitud_Profile">
       <property name="geometry">
        <rect>
-        <x>220</x>
+        <x>230</x>
         <y>370</y>
-        <width>141</width>
+        <width>131</width>
         <height>22</height>
        </rect>
       </property>
@@ -1210,7 +1210,7 @@
      <widget class="QLabel" name="Label_Epoca_3">
       <property name="geometry">
        <rect>
-        <x>10</x>
+        <x>20</x>
         <y>130</y>
         <width>151</width>
         <height>21</height>
@@ -1226,13 +1226,13 @@
        </font>
       </property>
       <property name="text">
-       <string>Variable on X Axis</string>
+       <string>Plot on X Axis</string>
       </property>
      </widget>
      <widget class="QLabel" name="Label_Epoca_4">
       <property name="geometry">
        <rect>
-        <x>220</x>
+        <x>240</x>
         <y>130</y>
         <width>151</width>
         <height>21</height>
@@ -1248,13 +1248,13 @@
        </font>
       </property>
       <property name="text">
-       <string>Variable on Y Axis</string>
+       <string>Plot on Y Axis</string>
       </property>
      </widget>
      <widget class="QLabel" name="Label_Altitud_16">
       <property name="geometry">
        <rect>
-        <x>160</x>
+        <x>170</x>
         <y>310</y>
         <width>51</width>
         <height>21</height>
@@ -1276,9 +1276,9 @@
      <widget class="QLabel" name="Label_Altitud_17">
       <property name="geometry">
        <rect>
-        <x>160</x>
+        <x>170</x>
         <y>240</y>
-        <width>51</width>
+        <width>61</width>
         <height>21</height>
        </rect>
       </property>

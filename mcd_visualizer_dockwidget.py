@@ -151,6 +151,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.Combo_Profile_X.currentIndexChanged.connect(self.on_profile_axes_changed)
         self.Combo_Profile_Y.currentIndexChanged.connect(self.on_profile_axes_changed)
+        self.Combo_Variable_Profile.itemSelectionChanged.connect(self.on_profile_axes_changed)
+
+        self.Push_Reset_Profile.clicked.connect(self.reset_all_profile)
 
     def open_interp_config(self):
         prev_time_raw = self.time_raw
@@ -826,12 +829,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         w.close()
                 break
 
-    def closeEvent(self, event):
-        #Emit signal and accept close event when plugin is closed
-        self.closingPlugin.emit()
-        event.accept()
-
-
     # PROFILE TOOL BEGINNING
 
     def cambio_epoca_profile(self, epoca):
@@ -926,9 +923,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:
                 if len(alt_vals) > 0:
                     self.Combo_Altitud_Profile.setCurrentIndex(0)
-            self.Combo_Altitud_Profile.setEnabled(True)
-            self.Combo_Altitud_Profile.setStyleSheet("")
-            self.Combo_Altitud_Profile.setToolTip("")
         else:
             self.Combo_Altitud_Profile.setEnabled(False)
             self.Combo_Altitud_Profile.setStyleSheet("QComboBox:disabled { background-color: red }")
@@ -958,20 +952,17 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             if len(lon_vals) > 0:
                 self.Combo_Longitud_Profile.setCurrentIndex(0)
 
-    def on_profile_axes_changed(self, idx):
+    def on_profile_axes_changed(self, idx=None):
         combo = self.sender()
 
         x = self.Combo_Profile_X.currentText()
         y = self.Combo_Profile_Y.currentText()
 
-        # — Warning si coinciden —
-        if x == y:
+        if x == y and x != "N/A" and y != "N/A":
             QMessageBox.warning(self,"Profile","Axis Variable X cannot be the same as Axis Variable Y")
-
             combo.setCurrentIndex(0)
             return
 
-        # — Local Time —
         if x == "Local Time" or y == "Local Time":
             self.Combo_Hora_Profile.setEnabled(False)
             self.Combo_Hora_Profile.setStyleSheet("QComboBox{background:red}")
@@ -981,17 +972,27 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Hora_Profile.setStyleSheet("")
             self.Combo_Hora_Profile.setToolTip("")
 
-        # — Altitude —
         if x == "Altitude" or y == "Altitude":
             self.Combo_Altitud_Profile.setEnabled(False)
             self.Combo_Altitud_Profile.setStyleSheet("QComboBox{background:red}")
             self.Combo_Altitud_Profile.setToolTip("Altitude locked as axis")
+
+        elif x == "Variable" or y == "Variable":
+            items = self.Combo_Variable_Profile.selectedItems()
+            if items and "altitude" not in self.ds[items[0].data(Qt.UserRole)].dims:
+                self.Combo_Altitud_Profile.setEnabled(False)
+                self.Combo_Altitud_Profile.setStyleSheet("QComboBox{background:red}")
+                self.Combo_Altitud_Profile.setToolTip("Selected variable has no 'altitude' dimension")
+            else:
+                self.Combo_Altitud_Profile.setEnabled(True)
+                self.Combo_Altitud_Profile.setStyleSheet("")
+                self.Combo_Altitud_Profile.setToolTip("")
+
         else:
             self.Combo_Altitud_Profile.setEnabled(True)
             self.Combo_Altitud_Profile.setStyleSheet("")
             self.Combo_Altitud_Profile.setToolTip("")
 
-        # — Latitude —
         if x == "Latitude" or y == "Latitude":
             self.Combo_Latitud_Profile.setEnabled(False)
             self.Combo_Latitud_Profile.setStyleSheet("QComboBox{background:red}")
@@ -1001,7 +1002,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Latitud_Profile.setStyleSheet("")
             self.Combo_Latitud_Profile.setToolTip("")
 
-        # — Longitude —
         if x == "Longitude" or y == "Longitude":
             self.Combo_Longitud_Profile.setEnabled(False)
             self.Combo_Longitud_Profile.setStyleSheet("QComboBox{background:red}")
@@ -1011,12 +1011,46 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Longitud_Profile.setStyleSheet("")
             self.Combo_Longitud_Profile.setToolTip("")
 
-        if x == "Variable" or y == "Variable":
+        if (x not in ("N/A", "Variable")) and (y not in ("N/A", "Variable")):
+            self.Combo_Variable_Profile.setEnabled(False)
+            self.Combo_Variable_Profile.setToolTip("Cannot pick other variables when neither axis is 'Variable'")
+        else:
             self.Combo_Variable_Profile.setEnabled(True)
             self.Combo_Variable_Profile.setStyleSheet("")
             self.Combo_Variable_Profile.setToolTip("")
-        else:
-            self.Combo_Variable_Profile.setEnabled(False)
-            self.Combo_Variable_Profile.setToolTip("Cannot pick other variables when neither axis is 'Variable'")
+
+
+    def reset_all_profile(self):
+        self.Combo_Epoca_Profile.setCurrentIndex(0)
+
+        if self.Combo_Archivo_Profile.count() > 0:
+            self.Combo_Archivo_Profile.setCurrentIndex(0)
+
+        self.Combo_Profile_X.setCurrentIndex(0)
+        self.Combo_Profile_Y.setCurrentIndex(0)
+
+        for i in range(self.Combo_Variable_Profile.count()):
+            self.Combo_Variable_Profile.item(i).setSelected(False)
+
+        if self.Combo_Hora_Profile.count() > 0:
+            self.Combo_Hora_Profile.setCurrentIndex(0)
+
+        if self.Combo_Altitud_Profile.count() > 0:
+            self.Combo_Altitud_Profile.setCurrentIndex(0)
+
+        if self.Combo_Latitud_Profile.count() > 0:
+            self.Combo_Latitud_Profile.setCurrentIndex(0)
+
+        if self.Combo_Longitud_Profile.count() > 0:
+            self.Combo_Longitud_Profile.setCurrentIndex(0)
+
+        self.on_profile_axes_changed(0)
+
+    def closeEvent(self, event):
+        #Emit signal and accept close event when plugin is closed
+        self.closingPlugin.emit()
+        event.accept()
+
+
 
 
