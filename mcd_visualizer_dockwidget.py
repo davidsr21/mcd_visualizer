@@ -5,7 +5,7 @@ import os
 import tempfile
 import uuid
 import processing
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, Qt
 from qgis.core import QgsProject,QgsRasterLayer, QgsLineSymbol,QgsSingleBandPseudoColorRenderer,QgsStyle,Qgis, QgsVectorLayer
@@ -154,6 +154,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Variable_Profile.itemSelectionChanged.connect(self.on_profile_axes_changed)
 
         self.Push_Reset_Profile.clicked.connect(self.reset_all_profile)
+
+        self.Push_Visualizar_Profile.clicked.connect(self.visualize_variable_profile)
+
+        self.on_profile_axes_changed()
 
     def open_interp_config(self):
         prev_time_raw = self.time_raw
@@ -987,7 +991,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.Combo_Altitud_Profile.setEnabled(True)
                 self.Combo_Altitud_Profile.setStyleSheet("")
                 self.Combo_Altitud_Profile.setToolTip("")
-
         else:
             self.Combo_Altitud_Profile.setEnabled(True)
             self.Combo_Altitud_Profile.setStyleSheet("")
@@ -1011,13 +1014,15 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Longitud_Profile.setStyleSheet("")
             self.Combo_Longitud_Profile.setToolTip("")
 
-        if (x not in ("N/A", "Variable")) and (y not in ("N/A", "Variable")):
-            self.Combo_Variable_Profile.setEnabled(False)
-            self.Combo_Variable_Profile.setToolTip("Cannot pick other variables when neither axis is 'Variable'")
+        self.Combo_Variable_Profile.setEnabled(True)
+        self.Combo_Variable_Profile.setStyleSheet("")
+        self.Combo_Variable_Profile.setToolTip("")
+
+        items = self.Combo_Variable_Profile.selectedItems()
+        if x != "N/A" and y != "N/A" and items:
+            self.Push_Visualizar_Profile.setEnabled(True)
         else:
-            self.Combo_Variable_Profile.setEnabled(True)
-            self.Combo_Variable_Profile.setStyleSheet("")
-            self.Combo_Variable_Profile.setToolTip("")
+            self.Push_Visualizar_Profile.setEnabled(False)
 
 
     def reset_all_profile(self):
@@ -1045,6 +1050,119 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Longitud_Profile.setCurrentIndex(0)
 
         self.on_profile_axes_changed(0)
+
+    def visualize_variable_profile(self):
+
+        x_axis = self.Combo_Profile_X.currentText()
+        y_axis = self.Combo_Profile_Y.currentText()
+
+        items = self.Combo_Variable_Profile.selectedItems()
+
+        if not items:
+            QMessageBox.warning(self, "Profile", "Select a variable to plot")
+            return
+
+        var_name = items[0].data(Qt.UserRole)
+        da = self.ds[var_name]
+
+        fixed_info = {} #Dictionary for fixed dimensions
+
+        if x_axis != 'Local Time' and y_axis != 'Local Time':
+            txt_time = self.Combo_Hora_Profile.currentText()
+            disp_time = f"{txt_time} h"
+
+            if ':' in txt_time:
+                h,m = map(int, txt_time.split(':'))
+                val_time = h + m/60.0
+            else:
+                val_time = float(txt_time)
+
+            fixed_info['Local Time'] = disp_time #Saves in fixed_info dictionary that Local Time has value disp time
+            da = da.sel(Time = val_time)
+
+        if x_axis != 'Altitude' and y_axis != 'Altitude':
+            if 'altitude' in da.dims or 'altitude' in da.coords:
+                txt_alt = self.Combo_Altitud_Profile.currentText()
+                disp_alt = f"{txt_alt} km"
+                val_alt = float(txt_alt)
+                fixed_info['Altitude'] = disp_alt
+                da = da.sel(altitude = val_alt, method = 'nearest')
+
+        if x_axis != 'Latitude' and y_axis != 'Latitude':
+            txt_lat = self.Combo_Latitud_Profile.currentText()
+            disp_lat = f"{txt_lat}°"
+            val_lat = float(txt_lat)
+            fixed_info['Latitude'] = disp_lat
+            da = da.sel(latitude=val_lat)
+
+        if x_axis != 'Longitude' and y_axis != 'Longitude':
+            txt_lon = self.Combo_Longitud_Profile.currentText()
+            disp_lon = f"{txt_lon}°"
+            val_lon = float(txt_lon)
+            fixed_info['Longitude'] = disp_lon
+            da = da.sel(longitude=val_lon)
+
+        dims_left = list(da.dims) #Free dimensions after fixing previous ones
+
+        fig, ax = plt.subplots() #Preparing the plot
+
+        if 'Variable' in (x_axis, y_axis):
+            if len(dims_left) != 1:
+                QMessageBox.warning(self, "Profile", "For 1D profile you must leave only one free dimension")
+                return
+
+            d = dims_left[0]
+            coords = da.coords[d].values
+            values = da.values
+
+            if x_axis == 'Variable':
+                x_vals, y_vals = values, coords
+                xlabel, ylabel = var_name, d
+            else:
+                x_vals, y_vals = coords, values
+                xlabel, ylabel = d, var_name
+
+            ax.plot(x_vals, y_vals, '-o')
+
+        else:
+            if len(dims_left) != 2:
+                QMessageBox.warning(self, "Profile", "For 2D profile you must leave two free dimension")
+                return
+
+            map_gui_to_dim = {
+                'Local Time': 'Time',
+                'Altitude': 'altitude',
+                'Latitude': 'latitude',
+                'Longitude': 'longitude'
+            }
+
+            x_dim = map_gui_to_dim[x_axis]
+            y_dim = map_gui_to_dim[y_axis]
+            arr = da.transpose(y_dim, x_dim)  # (y, x) para pcolormesh
+            xs = arr.coords[x_dim].values
+            ys = arr.coords[y_dim].values
+            vals = arr.values
+
+            mesh = ax.pcolormesh(xs, ys, vals, shading='auto')
+            cbar = fig.colorbar(mesh, ax=ax)
+            cbar.set_label(var_name)
+            xlabel, ylabel = x_axis, y_axis
+
+        epoca = self.Combo_Epoca_Profile.currentText()
+        archivo = self.Combo_Archivo_Profile.currentText()
+        fixed_parts = [f"{k}: {v}" for k, v in fixed_info.items()]
+        fixed_str = " | ".join(fixed_parts)
+        ax.set_title(
+            f"{epoca} | {archivo}\n"
+            f"{fixed_str}\n"
+        )
+
+        # 7) Etiquetas y estilo
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.grid(True, linestyle=':')
+        plt.tight_layout()
+        plt.show()
 
     def closeEvent(self, event):
         #Emit signal and accept close event when plugin is closed
