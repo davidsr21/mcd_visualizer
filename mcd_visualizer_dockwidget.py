@@ -689,10 +689,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             lon_max = float(self.Combo_Longitud_Max.currentText())
             lat_min = float(self.Combo_Latitud_Min.currentText())
             lat_max = float(self.Combo_Latitud_Max.currentText())
-            opts = gdal.TranslateOptions(
-                format="GTiff",
-                projWin=[lon_min, lat_max, lon_max, lat_min]
-            )
+            opts = gdal.TranslateOptions(format="GTiff",projWin=[lon_min, lat_max, lon_max, lat_min])
             tmp_tif = os.path.join(tempfile.gettempdir(), "mola_crop.tif")
             gdal.Translate(tmp_tif, origen, options=opts)
             raster_path = tmp_tif
@@ -703,12 +700,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         ds = gdal.Open(raster_path)
         gt = ds.GetGeoTransform()
         down_tif = os.path.join(tempfile.gettempdir(), "mola_down.tif")
-        gdal.Warp(
-            down_tif, ds,
-            xRes=gt[1] * 4,
-            yRes=abs(gt[5]) * 4,
-            resampleAlg='bilinear'
-        )
+        gdal.Warp(down_tif, ds,xRes=gt[1] * 4,yRes=abs(gt[5]) * 4,resampleAlg='bilinear')
         ds = None
         raster_path = down_tif
 
@@ -722,22 +714,16 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 pass
 
         # Run GDAL contour algorithm to generate vector contours every 1000m
-        params = {
-            'INPUT': raster_path,
-            'BAND': 1,
-            'INTERVAL': 1000.0,
-            'FIELD_NAME': 'ELEV',
-            'OUTPUT': shp_path
-        }
+        params = {'INPUT': raster_path,'BAND': 1,'INTERVAL': 1000.0,'FIELD_NAME': 'ELEV','OUTPUT': shp_path}
         result = processing.run("gdal:contour", params)
         if 'OUTPUT' not in result or not result['OUTPUT']:
-            QMessageBox.critical(self, "Error", "gdal:contour falló sin salida.")
+            QMessageBox.critical(self, "Error", "gdal:contour failed without exit.")
             return
 
         # Load resulting shapefile as a vector layer
         cont_layer = QgsVectorLayer(result['OUTPUT'], "MOLA Isolines", "ogr")
         if not cont_layer.isValid():
-            QMessageBox.critical(self, "Error", "No se pudieron cargar las isolíneas de MOLA.")
+            QMessageBox.critical(self, "Error", "MOLA isolines could not be created.")
             return
 
         # Put image thickness up to 0.2mm
@@ -760,11 +746,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         #Check that data array is non-empty
         if arr.size == 0 or len(lat) == 0 or len(lon) == 0:
-            QMessageBox.warning(
-                self,
-                "No data",
-                "Selected crop has no info"
-            )
+            QMessageBox.warning(self,"No data","Selected crop has no info")
             return
 
         # Ensure data to be displyed is 2D
@@ -805,12 +787,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         provider = layer.dataProvider()
         ramp = QgsStyle().defaultStyle().colorRamp('Turbo')
         renderer = QgsSingleBandPseudoColorRenderer(provider, 1)
-        renderer.createShader(
-            ramp,
-            Qgis.ShaderInterpolationMethod.Linear,
-            Qgis.ShaderClassificationMethod.Continuous,
-            0
-        )
+        renderer.createShader(ramp,Qgis.ShaderInterpolationMethod.Linear,Qgis.ShaderClassificationMethod.Continuous,0)
         layer.setRenderer(renderer)
         layer.setOpacity(0.8) #Layer opacity up to 80%
 
@@ -976,21 +953,18 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             self.Combo_Hora_Profile.setStyleSheet("")
             self.Combo_Hora_Profile.setToolTip("")
 
+        sel = self.Combo_Variable_Profile.selectedItems()
+
         if x == "Altitude" or y == "Altitude":
             self.Combo_Altitud_Profile.setEnabled(False)
             self.Combo_Altitud_Profile.setStyleSheet("QComboBox{background:red}")
             self.Combo_Altitud_Profile.setToolTip("Altitude locked as axis")
 
-        elif x == "Variable" or y == "Variable":
-            items = self.Combo_Variable_Profile.selectedItems()
-            if items and "altitude" not in self.ds[items[0].data(Qt.UserRole)].dims:
-                self.Combo_Altitud_Profile.setEnabled(False)
-                self.Combo_Altitud_Profile.setStyleSheet("QComboBox{background:red}")
-                self.Combo_Altitud_Profile.setToolTip("Selected variable has no 'altitude' dimension")
-            else:
-                self.Combo_Altitud_Profile.setEnabled(True)
-                self.Combo_Altitud_Profile.setStyleSheet("")
-                self.Combo_Altitud_Profile.setToolTip("")
+        elif sel and 'altitude' not in self.ds[sel[0].data(Qt.UserRole)].dims:
+            self.Combo_Altitud_Profile.setEnabled(False)
+            self.Combo_Altitud_Profile.setStyleSheet("QComboBox{background:red}")
+            self.Combo_Altitud_Profile.setToolTip("Selected variable has no 'altitude' dimension")
+
         else:
             self.Combo_Altitud_Profile.setEnabled(True)
             self.Combo_Altitud_Profile.setStyleSheet("")
@@ -1018,7 +992,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Variable_Profile.setStyleSheet("")
         self.Combo_Variable_Profile.setToolTip("")
 
-        items = self.Combo_Variable_Profile.selectedItems()
+        items = sel
         if x != "N/A" and y != "N/A" and items:
             self.Push_Visualizar_Profile.setEnabled(True)
         else:
@@ -1063,6 +1037,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
 
         var_name = items[0].data(Qt.UserRole)
+        desc = self.variable_descriptions.get(var_name, var_name)
+
         da = self.ds[var_name]
 
         fixed_info = {} #Dictionary for fixed dimensions
@@ -1103,7 +1079,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             da = da.sel(longitude=val_lon)
 
         dims_left = list(da.dims) #Free dimensions after fixing previous ones
-
         fig, ax = plt.subplots() #Preparing the plot
 
         if 'Variable' in (x_axis, y_axis):
@@ -1117,10 +1092,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             if x_axis == 'Variable':
                 x_vals, y_vals = values, coords
-                xlabel, ylabel = var_name, d
+                xlabel, ylabel = desc, d
             else:
                 x_vals, y_vals = coords, values
-                xlabel, ylabel = d, var_name
+                xlabel, ylabel = d, desc
 
             ax.plot(x_vals, y_vals, '-o')
 
@@ -1129,37 +1104,38 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 QMessageBox.warning(self, "Profile", "For 2D profile you must leave two free dimension")
                 return
 
-            map_gui_to_dim = {
-                'Local Time': 'Time',
-                'Altitude': 'altitude',
-                'Latitude': 'latitude',
-                'Longitude': 'longitude'
-            }
+            map_gui_to_dim = {'Local Time': 'Time','Altitude': 'altitude','Latitude': 'latitude','Longitude': 'longitude'}
 
             x_dim = map_gui_to_dim[x_axis]
             y_dim = map_gui_to_dim[y_axis]
-            arr = da.transpose(y_dim, x_dim)  # (y, x) para pcolormesh
+            arr = da.transpose(y_dim, x_dim)
             xs = arr.coords[x_dim].values
             ys = arr.coords[y_dim].values
             vals = arr.values
 
             mesh = ax.pcolormesh(xs, ys, vals, shading='auto')
             cbar = fig.colorbar(mesh, ax=ax)
-            cbar.set_label(var_name)
+            cbar.set_label(desc)
             xlabel, ylabel = x_axis, y_axis
+
+        unit_suffix = {
+            'Time': ' (h)', 'altitude': ' (km)',
+            'latitude': ' (º)', 'longitude': ' (º)',
+            'Local Time': ' (h)', 'Altitude': ' (km)',
+            'Latitude': ' (º)', 'Longitude': ' (º)',
+        }
+
+        xlabel_full = xlabel + unit_suffix.get(xlabel, "")
+        ylabel_full = ylabel + unit_suffix.get(ylabel, "")
 
         epoca = self.Combo_Epoca_Profile.currentText()
         archivo = self.Combo_Archivo_Profile.currentText()
         fixed_parts = [f"{k}: {v}" for k, v in fixed_info.items()]
         fixed_str = " | ".join(fixed_parts)
-        ax.set_title(
-            f"{epoca} | {archivo}\n"
-            f"{fixed_str}\n"
-        )
+        ax.set_title(f"{epoca} | {archivo}\n"f"{fixed_str}\n")
 
-        # 7) Etiquetas y estilo
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel(ylabel)
+        ax.set_xlabel(xlabel_full)
+        ax.set_ylabel(ylabel_full)
         ax.grid(True, linestyle=':')
         plt.tight_layout()
         plt.show()
@@ -1168,7 +1144,3 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         #Emit signal and accept close event when plugin is closed
         self.closingPlugin.emit()
         event.accept()
-
-
-
-
