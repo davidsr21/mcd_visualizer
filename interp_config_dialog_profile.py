@@ -2,16 +2,16 @@ import os
 from qgis.PyQt import uic, QtWidgets
 
 UI_PATH = os.path.join(os.path.dirname(__file__), 'interp_config_dialog_profile.ui')
-Ui_InterpConfigDialog, _ = uic.loadUiType(UI_PATH)
+Ui_InterpConfigDialogProfile, _ = uic.loadUiType(UI_PATH)
 
-class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
+class InterpConfigDialogProfile(QtWidgets.QDialog, Ui_InterpConfigDialogProfile):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
 
         #If father has not this atributes yet, he uses this values as default
-        cfg_time_raw = getattr(parent, "time_raw", True)
-        cfg_time_step = getattr(parent, "time_step", "1 hour")
+        cfg_time_raw = getattr(parent, "time_raw_profile", True)
+        cfg_time_step = getattr(parent, "time_step_profile", "1 hour")
 
         if cfg_time_raw:
             self.Combo_Time_Mode_Profile.setCurrentText("Raw data")
@@ -22,17 +22,17 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
 
         self.Combo_Time_Resolution_Profile.setCurrentText(cfg_time_step)
 
-        cfg_alt_raw = getattr(parent, "alt_raw", True)
+        cfg_alt_raw = getattr(parent, "alt_raw_profile", True)
 
         if cfg_alt_raw:
             self.Combo_Altitude_Mode_Profile.setCurrentText("Raw data")
         else:
             self.Combo_Altitude_Mode_Profile.setCurrentText("Interpolate data")
 
-        cfg_lat_raw = getattr(parent, "lat_raw", True)
-        cfg_lat_step = getattr(parent, "lat_step", "2")
-        cfg_lon_raw = getattr(parent, "lon_raw", True)
-        cfg_lon_step = getattr(parent, "lon_step", "2")
+        cfg_lat_raw = getattr(parent, "lat_raw_profile", True)
+        cfg_lat_step = getattr(parent, "lat_step_profile", "2")
+        cfg_lon_raw = getattr(parent, "lon_raw_profile", True)
+        cfg_lon_step = getattr(parent, "lon_step_profile", "2")
 
         if cfg_lat_raw:
             self.Combo_Latitude_Mode_Profile.setCurrentText("Raw data")
@@ -102,15 +102,15 @@ class InterpConfigDialog(QtWidgets.QDialog, Ui_InterpConfigDialog):
         """
         p = self.parent()
         #Throws new values into main plugin
-        p.time_raw = (self.Combo_Time_Mode_Profile.currentText() == "Raw data")
-        p.time_step = self.Combo_Time_Resolution_Profile.currentText()
+        p.time_raw_profile = (self.Combo_Time_Mode_Profile.currentText() == "Raw data")
+        p.time_step_profile = self.Combo_Time_Resolution_Profile.currentText()
 
-        p.alt_raw = (self.Combo_Altitude_Mode_Profile.currentText() == "Raw data")
+        p.alt_raw_profile = (self.Combo_Altitude_Mode_Profile.currentText() == "Raw data")
 
-        p.lat_raw = (self.Combo_Latitude_Mode_Profile.currentText() == "Raw data")
-        p.lat_step = self.Combo_Latitude_Resolution_Profile.currentText()
+        p.lat_raw_profile = (self.Combo_Latitude_Mode_Profile.currentText() == "Raw data")
+        p.lat_step_profile = self.Combo_Latitude_Resolution_Profile.currentText()
 
-        p.lon_raw = (self.Combo_Longitude_Mode_Profile.currentText() == "Raw data")
-        p.lon_step = self.Combo_Longitude_Resolution_Profile.currentText()
+        p.lon_raw_profile = (self.Combo_Longitude_Mode_Profile.currentText() == "Raw data")
+        p.lon_step_profile = self.Combo_Longitude_Resolution_Profile.currentText()
 
         self.accept()
