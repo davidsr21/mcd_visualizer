@@ -177,6 +177,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Interpolate_Altitude_Profile.clear()
         self.Interpolate_Altitude_Profile.setPlaceholderText("Introduce altitude (m)")
 
+        self.Check_Mapa_Profile.stateChanged.connect(self.on_profile_axes_changed)
+
     def open_interp_config(self):
         prev_time_raw = self.time_raw
         prev_time_step = self.time_step
@@ -637,32 +639,46 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                         user_alt_km = v / 1000.0
                         da = da.interp(altitude = user_alt_km, method = "linear")
 
+                lat_vals = self.ds.latitude.values
+                lon_vals = self.ds.longitude.values
 
-                if not self.Check_Mapa.isChecked():
-                    lat_vals = self.ds.latitude.values
-                    lon_vals = self.ds.longitude.values
-
+                if self.Check_Mapa.isChecked():
+                    # Full map + posible interpolación espacial
+                    # — si lat_raw es False, interpola toda la grilla en latitudes
+                    if not self.lat_raw:
+                        new_lats = np.arange(lat_vals.min(),
+                                             lat_vals.max() + 1e-6,
+                                             float(self.lat_step))
+                        da = da.interp(latitude=new_lats, method="linear")
+                    # — si lon_raw es False, interpola toda la grilla en longitudes
+                    if not self.lon_raw:
+                        new_lons = np.arange(lon_vals.min(),
+                                             lon_vals.max() + 1e-6,
+                                             float(self.lon_step))
+                        da = da.interp(longitude=new_lons, method="linear")
+                else:
+                    # Recorte clásico + posible interpolación espacial
                     if self.lat_raw:
                         if lat_vals[0] < lat_vals[-1]:
                             lat_slice = slice(lat_min, lat_max)
                         else:
                             lat_slice = slice(lat_max, lat_min)
-
-                        da = da.sel(latitude = lat_slice)
+                        da = da.sel(latitude=lat_slice)
                     else:
-                        new_lats = np.arange(lat_min, lat_max + 1e-6, float(self.lat_step))
-                        da = da.interp(latitude = new_lats, method = "linear")
+                        new_lats = np.arange(lat_min, lat_max + 1e-6,
+                                             float(self.lat_step))
+                        da = da.interp(latitude=new_lats, method="linear")
 
                     if self.lon_raw:
                         if lon_vals[0] < lon_vals[-1]:
                             lon_slice = slice(lon_min, lon_max)
                         else:
                             lon_slice = slice(lon_max, lon_min)
-
-                        da = da.sel(longitude = lon_slice)
+                        da = da.sel(longitude=lon_slice)
                     else:
-                        new_lons = np.arange(lon_min, lon_max + 1e-6, float(self.lon_step))
-                        da = da.interp(longitude = new_lons, method = "linear")
+                        new_lons = np.arange(lon_min, lon_max + 1e-6,
+                                             float(self.lon_step))
+                        da = da.interp(longitude=new_lons, method="linear")
 
                 lats = da.latitude.values
                 lons = da.longitude.values
@@ -950,8 +966,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if not self.lat_raw_profile:
             labels.reverse()
 
-        self.Combo_Latitud_Profile.clear()
-        self.Combo_Latitud_Profile.addItems(labels)
+        self.Combo_Latitud_Min_Profile.clear()
+        self.Combo_Latitud_Min_Profile.addItems(labels)
+        self.Combo_Latitud_Max_Profile.clear()
+        self.Combo_Latitud_Max_Profile.addItems(labels)
 
     def refresh_lon_combo_profile(self):
         lons = self.ds.longitude.values.astype(float)
@@ -982,8 +1000,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         for v in grid:
             labels.append(f"{v:.4f}")
 
-        self.Combo_Longitud_Profile.clear()
-        self.Combo_Longitud_Profile.addItems(labels)
+        self.Combo_Longitud_Min_Profile.clear()
+        self.Combo_Longitud_Min_Profile.addItems(labels)
+        self.Combo_Longitud_Max_Profile.clear()
+        self.Combo_Longitud_Max_Profile.addItems(labels)
 
     def cambio_epoca_profile(self, epoca):
         carpeta = self.lista_carpetas.get(epoca)
@@ -1083,31 +1103,51 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         else:
             self.Interpolate_Altitude_Profile.clear()
 
-        prev_lat = self.Combo_Latitud_Profile.currentText()
+        prev_lat_min = self.Combo_Latitud_Min_Profile.currentText()
+        prev_lat_max = self.Combo_Latitud_Max_Profile.currentText()
 
         self.refresh_lat_combo_profile()
 
-        lat_items = []
-        for i in range(self.Combo_Latitud_Profile.count()):
-            lat_items.append(self.Combo_Latitud_Profile.itemText(i))
+        lat_min_items = []
+        for i in range(self.Combo_Latitud_Min_Profile.count()):
+            lat_min_items.append(self.Combo_Latitud_Min_Profile.itemText(i))
 
-        if prev_lat in lat_items:
-            self.Combo_Latitud_Profile.setCurrentText(prev_lat)
-        elif self.Combo_Latitud_Profile.count() > 0:
-            self.Combo_Latitud_Profile.setCurrentIndex(0)
+        if prev_lat_min in lat_min_items:
+            self.Combo_Latitud_Min_Profile.setCurrentText(prev_lat_min)
+        elif self.Combo_Latitud_Min_Profile.count() > 0:
+            self.Combo_Latitud_Min_Profile.setCurrentIndex(0)
 
-        prev_lon = self.Combo_Longitud_Profile.currentText()
+        lat_max_items = []
+        for i in range(self.Combo_Latitud_Max_Profile.count()):
+            lat_max_items.append(self.Combo_Latitud_Max_Profile.itemText(i))
+
+        if prev_lat_max in lat_max_items:
+            self.Combo_Latitud_Max_Profile.setCurrentText(prev_lat_max)
+        elif self.Combo_Latitud_Max_Profile.count() > 0:
+            self.Combo_Latitud_Max_Profile.setCurrentIndex(0)
+
+        prev_lon_min = self.Combo_Longitud_Min_Profile.currentText()
+        prev_lon_max = self.Combo_Longitud_Max_Profile.currentText()
 
         self.refresh_lon_combo_profile()
 
-        lon_items = []
-        for i in range(self.Combo_Longitud_Profile.count()):
-            lon_items.append(self.Combo_Longitud_Profile.itemText(i))
+        lon_min_items = []
+        for i in range(self.Combo_Longitud_Min_Profile.count()):
+            lon_min_items.append(self.Combo_Longitud_Min_Profile.itemText(i))
 
-        if prev_lon in lon_items:
-            self.Combo_Longitud_Profile.setCurrentText(prev_lon)
-        elif self.Combo_Longitud_Profile.count() > 0:
-            self.Combo_Longitud_Profile.setCurrentIndex(0)
+        if prev_lon_min in lon_min_items:
+            self.Combo_Longitud_Min_Profile.setCurrentText(prev_lon_min)
+        elif self.Combo_Longitud_Min_Profile.count() > 0:
+            self.Combo_Longitud_Min_Profile.setCurrentIndex(0)
+
+        lon_max_items = []
+        for i in range(self.Combo_Longitud_Max_Profile.count()):
+            lon_max_items.append(self.Combo_Longitud_Max_Profile.itemText(i))
+
+        if prev_lon_max in lon_max_items:
+            self.Combo_Longitud_Max_Profile.setCurrentText(prev_lon_max)
+        elif self.Combo_Longitud_Max_Profile.count() > 0:
+            self.Combo_Longitud_Max_Profile.setCurrentIndex(0)
 
         self.on_profile_axes_changed()
 
@@ -1158,22 +1198,55 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.Interpolate_Altitude_Profile.setEnabled(True)
 
         if x == "Latitude" or y == "Latitude":
-            self.Combo_Latitud_Profile.setEnabled(False)
-            self.Combo_Latitud_Profile.setStyleSheet("QComboBox{background:red}")
-            self.Combo_Latitud_Profile.setToolTip("Latitude locked as axis")
+            self.Combo_Latitud_Min_Profile.setEnabled(True)
+            self.Combo_Latitud_Min_Profile.setStyleSheet("")
+            self.Combo_Latitud_Min_Profile.setToolTip("")
+
+            self.Combo_Latitud_Max_Profile.setEnabled(True)
+            self.Combo_Latitud_Max_Profile.setStyleSheet("")
+            self.Combo_Latitud_Max_Profile.setToolTip("")
         else:
-            self.Combo_Latitud_Profile.setEnabled(True)
-            self.Combo_Latitud_Profile.setStyleSheet("")
-            self.Combo_Latitud_Profile.setToolTip("")
+            self.Combo_Latitud_Min_Profile.setEnabled(True)
+            self.Combo_Latitud_Min_Profile.setStyleSheet("")
+            self.Combo_Latitud_Min_Profile.setToolTip("")
+
+            self.Combo_Latitud_Max_Profile.setEnabled(False)
+            self.Combo_Latitud_Max_Profile.setStyleSheet("QComboBox{background:red}")
+            self.Combo_Latitud_Max_Profile.setToolTip("Latitude range disabled when not axis")
 
         if x == "Longitude" or y == "Longitude":
-            self.Combo_Longitud_Profile.setEnabled(False)
-            self.Combo_Longitud_Profile.setStyleSheet("QComboBox{background:red}")
-            self.Combo_Longitud_Profile.setToolTip("Longitude locked as axis")
+            self.Combo_Longitud_Min_Profile.setEnabled(True)
+            self.Combo_Longitud_Min_Profile.setStyleSheet("")
+            self.Combo_Longitud_Min_Profile.setToolTip("")
+
+            self.Combo_Longitud_Max_Profile.setEnabled(True)
+            self.Combo_Longitud_Max_Profile.setStyleSheet("")
+            self.Combo_Longitud_Max_Profile.setToolTip("")
         else:
-            self.Combo_Longitud_Profile.setEnabled(True)
-            self.Combo_Longitud_Profile.setStyleSheet("")
-            self.Combo_Longitud_Profile.setToolTip("")
+            self.Combo_Longitud_Min_Profile.setEnabled(True)
+            self.Combo_Longitud_Min_Profile.setStyleSheet("")
+            self.Combo_Longitud_Min_Profile.setToolTip("")
+
+            self.Combo_Longitud_Max_Profile.setEnabled(False)
+            self.Combo_Longitud_Max_Profile.setStyleSheet("QComboBox{background:red}")
+            self.Combo_Longitud_Max_Profile.setToolTip("Longitude range disabled when not axis")
+
+        if (x == "Latitude" and y == "Longitude") or (x == "Longitude" and y == "Latitude"):
+            self.Check_Mapa_Profile.setEnabled(True)
+            self.Check_Mapa_Profile.setStyleSheet("")  # normal appearance
+            self.Check_Mapa_Profile.setToolTip("")
+        else:
+            self.Check_Mapa_Profile.setEnabled(False)
+            self.Check_Mapa_Profile.setStyleSheet("QCheckBox { background-color: lightgray }")
+            self.Check_Mapa_Profile.setToolTip("Enabled only when axes are Latitude and Longitude")
+            if self.Check_Mapa_Profile.isChecked():
+                self.Check_Mapa_Profile.setChecked(False)
+
+        if self.Check_Mapa_Profile.isChecked():
+            for c in (self.Combo_Latitud_Min_Profile, self.Combo_Latitud_Max_Profile,self.Combo_Longitud_Min_Profile, self.Combo_Longitud_Max_Profile):
+                c.setEnabled(False)
+                c.setStyleSheet("QComboBox{background:red}")
+                c.setToolTip("Disabled when full map is selected")
 
         self.Combo_Variable_Profile.setEnabled(True)
         self.Combo_Variable_Profile.setStyleSheet("")
@@ -1216,126 +1289,156 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.Combo_Altitud_Profile.count() > 0:
             self.Combo_Altitud_Profile.setCurrentIndex(0)
 
-        if self.Combo_Latitud_Profile.count() > 0:
-            self.Combo_Latitud_Profile.setCurrentIndex(0)
+        if self.Combo_Latitud_Min_Profile.count() > 0:
+            self.Combo_Latitud_Min_Profile.setCurrentIndex(0)
 
-        if self.Combo_Longitud_Profile.count() > 0:
-            self.Combo_Longitud_Profile.setCurrentIndex(0)
+        if self.Combo_Latitud_Max_Profile.count() > 0:
+            self.Combo_Latitud_Max_Profile.setCurrentIndex(0)
+
+        if self.Combo_Longitud_Min_Profile.count() > 0:
+            self.Combo_Longitud_Min_Profile.setCurrentIndex(0)
+
+        if self.Combo_Longitud_Max_Profile.count() > 0:
+            self.Combo_Longitud_Max_Profile.setCurrentIndex(0)
 
         self.on_profile_axes_changed()
 
     def visualize_variable_profile(self):
-
         x_axis = self.Combo_Profile_X.currentText()
         y_axis = self.Combo_Profile_Y.currentText()
-
-        items = self.Combo_Variable_Profile.selectedItems()
-
-        if not items:
+        sel_items = self.Combo_Variable_Profile.selectedItems()
+        if not sel_items:
             QMessageBox.warning(self, "Profile", "Select a variable to plot")
             return
 
-        var_name = items[0].data(Qt.UserRole)
-        desc = self.variable_descriptions.get(var_name, var_name)
+        # 1) carga y fija las dimensiones NO-ESPACIALES
+        var = sel_items[0].data(Qt.UserRole)
+        da = self.ds[var]
+        desc = self.variable_descriptions.get(var, var)
+        fixed = {}
 
-        da = self.ds[var_name]
-
-        fixed_info = {} #Dictionary for fixed dimensions
-
-        if x_axis != 'Local Time' and y_axis != 'Local Time':
-            txt_time = self.Combo_Hora_Profile.currentText()
-            disp_time = f"{txt_time} h"
-
-            if ':' in txt_time:
-                h,m = map(int, txt_time.split(':'))
+        # Time
+        if "Local Time" not in (x_axis, y_axis):
+            txt = self.Combo_Hora_Profile.currentText()
+            disp = f"{txt} h"
+            if ":" in txt:
+                h, m = map(int, txt.split(":"))
                 val_time = h + m/60.0
             else:
-                val_time = float(txt_time)
+                val_time = float(txt)
+            fixed["Local Time"] = disp
+            da = da.sel(Time=val_time)
 
-            fixed_info['Local Time'] = disp_time #Saves in fixed_info dictionary that Local Time has value disp time
-            da = da.sel(Time = val_time)
+        # Altitude
+        if "Altitude" not in (x_axis, y_axis) and "altitude" in da.dims:
+            txt = self.Combo_Altitud_Profile.currentText()
+            disp = f"{txt} km"
+            val_alt = float(txt)
+            fixed["Altitude"] = disp
+            da = da.sel(altitude=val_alt, method="nearest")
 
-        if x_axis != 'Altitude' and y_axis != 'Altitude':
-            if 'altitude' in da.dims or 'altitude' in da.coords:
-                txt_alt = self.Combo_Altitud_Profile.currentText()
-                disp_alt = f"{txt_alt} km"
-                val_alt = float(txt_alt)
-                fixed_info['Altitude'] = disp_alt
-                da = da.sel(altitude = val_alt, method = 'nearest')
+        # 2) recortes espaciales o fijaciones
+        full_map = self.Check_Mapa_Profile.isChecked()
+        lat_min = float(self.Combo_Latitud_Min_Profile.currentText())
+        lat_max = float(self.Combo_Latitud_Max_Profile.currentText())
+        lon_min = float(self.Combo_Longitud_Min_Profile.currentText())
+        lon_max = float(self.Combo_Longitud_Max_Profile.currentText())
 
-        if x_axis != 'Latitude' and y_axis != 'Latitude':
-            txt_lat = self.Combo_Latitud_Profile.currentText()
-            disp_lat = f"{txt_lat}°"
-            val_lat = float(txt_lat)
-            fixed_info['Latitude'] = disp_lat
-            da = da.sel(latitude=val_lat)
-
-        if x_axis != 'Longitude' and y_axis != 'Longitude':
-            txt_lon = self.Combo_Longitud_Profile.currentText()
-            disp_lon = f"{txt_lon}°"
-            val_lon = float(txt_lon)
-            fixed_info['Longitude'] = disp_lon
-            da = da.sel(longitude=val_lon)
-
-        dims_left = list(da.dims) #Free dimensions after fixing previous ones
-        fig, ax = plt.subplots() #Preparing the plot
-
-        if 'Variable' in (x_axis, y_axis):
-            if len(dims_left) != 1:
-                QMessageBox.warning(self, "Profile", "For 1D profile you must leave only one free dimension")
+        # validación de rangos (solo cuando no es full map y el eje está activo)
+        if not full_map:
+            if "Latitude" in (x_axis, y_axis) and lat_min >= lat_max:
+                QMessageBox.warning(self, "Invalid latitude range",
+                                    "Min latitude must be lower than max latitude")
+                return
+            if "Longitude" in (x_axis, y_axis) and lon_min >= lon_max:
+                QMessageBox.warning(self, "Invalid longitude range",
+                                    "Min longitude must be lower than max longitude")
                 return
 
+        # LATITUD
+        lat_vals = da.latitude.values
+        if "Latitude" in (x_axis, y_axis):
+            # perfil 1D ó 2D en latitud: slice dinámico según orden
+            if not full_map:
+                if lat_vals[0] < lat_vals[-1]:
+                    da = da.sel(latitude=slice(lat_min, lat_max))
+                else:
+                    da = da.sel(latitude=slice(lat_max, lat_min))
+        else:
+            # latitude fija a lat_min con nearest
+            da = da.sel(latitude=lat_min, method="nearest")
+            fixed["Latitude"] = f"{lat_min}°"
+
+        # LONGITUD
+        lon_vals = da.longitude.values
+        if "Longitude" in (x_axis, y_axis):
+            if not full_map:
+                if lon_vals[0] < lon_vals[-1]:
+                    da = da.sel(longitude=slice(lon_min, lon_max))
+                else:
+                    da = da.sel(longitude=slice(lon_max, lon_min))
+        else:
+            da = da.sel(longitude=lon_min, method="nearest")
+            fixed["Longitude"] = f"{lon_min}°"
+
+        # 3) preparación del gráfico
+        dims_left = list(da.dims)
+        fig, ax = plt.subplots()
+
+        # 1D profile: aparece “Variable” en uno de los ejes
+        if "Variable" in (x_axis, y_axis):
+            if len(dims_left) != 1:
+                QMessageBox.warning(self, "Profile",
+                                    "For 1D profile you must leave only one free dimension")
+                return
             d = dims_left[0]
             coords = da.coords[d].values
-            values = da.values
-
-            if x_axis == 'Variable':
-                x_vals, y_vals = values, coords
+            vals = da.values
+            if x_axis == "Variable":
+                ax.plot(vals, coords, "-o")
                 xlabel, ylabel = desc, d
             else:
-                x_vals, y_vals = coords, values
+                ax.plot(coords, vals, "-o")
                 xlabel, ylabel = d, desc
 
-            ax.plot(x_vals, y_vals, '-o')
-
+        # 2D profile: dos dimensiones libres
         else:
             if len(dims_left) != 2:
-                QMessageBox.warning(self, "Profile", "For 2D profile you must leave two free dimension")
+                QMessageBox.warning(self, "Profile",
+                                    "For 2D profile you must leave two free dimensions")
                 return
-
-            map_gui_to_dim = {'Local Time': 'Time','Altitude': 'altitude','Latitude': 'latitude','Longitude': 'longitude'}
-
-            x_dim = map_gui_to_dim[x_axis]
-            y_dim = map_gui_to_dim[y_axis]
-            arr = da.transpose(y_dim, x_dim)
-            xs = arr.coords[x_dim].values
-            ys = arr.coords[y_dim].values
-            vals = arr.values
-
-            mesh = ax.pcolormesh(xs, ys, vals, shading='auto', cmap='inferno', vmin=vals.min(), vmax=vals.max()); fig.colorbar(mesh, ax=ax).set_label(desc)
-            cbar = fig.colorbar(mesh, ax=ax)
-            cbar.set_label(desc)
+            gui2dim = {
+                "Local Time": "Time", "Altitude": "altitude",
+                "Latitude": "latitude", "Longitude": "longitude"
+            }
+            xdim = gui2dim[x_axis]
+            ydim = gui2dim[y_axis]
+            arr = da.transpose(ydim, xdim)
+            xs = arr.coords[xdim].values
+            ys = arr.coords[ydim].values
+            zs = arr.values
+            mesh = ax.pcolormesh(xs, ys, zs, shading="auto",
+                                 cmap="inferno",
+                                 vmin=zs.min(), vmax=zs.max())
+            fig.colorbar(mesh, ax=ax).set_label(desc)
             xlabel, ylabel = x_axis, y_axis
 
-        unit_suffix = {
-            'Time': ' (h)', 'altitude': ' (km)',
-            'latitude': ' (º)', 'longitude': ' (º)',
-            'Local Time': ' (h)', 'Altitude': ' (km)',
-            'Latitude': ' (º)', 'Longitude': ' (º)',
+        # 4) etiquetas y título
+        suffix = {
+            "Time": " (h)", "altitude": " (km)",
+            "latitude": " (º)", "longitude": " (º)",
+            "Local Time": " (h)", "Altitude": " (km)",
+            "Latitude": " (º)", "Longitude": " (º)"
         }
+        ax.set_xlabel(xlabel + suffix.get(xlabel, ""))
+        ax.set_ylabel(ylabel + suffix.get(ylabel, ""))
 
-        xlabel_full = xlabel + unit_suffix.get(xlabel, "")
-        ylabel_full = ylabel + unit_suffix.get(ylabel, "")
+        era = self.Combo_Epoca_Profile.currentText()
+        arc = self.Combo_Archivo_Profile.currentText()
+        fixed_str = " | ".join(f"{k}: {v}" for k, v in fixed.items())
+        ax.set_title(f"{era} | {arc}\n{fixed_str}\n")
 
-        epoca = self.Combo_Epoca_Profile.currentText()
-        archivo = self.Combo_Archivo_Profile.currentText()
-        fixed_parts = [f"{k}: {v}" for k, v in fixed_info.items()]
-        fixed_str = " | ".join(fixed_parts)
-        ax.set_title(f"{epoca} | {archivo}\n"f"{fixed_str}\n")
-
-        ax.set_xlabel(xlabel_full)
-        ax.set_ylabel(ylabel_full)
-        ax.grid(True, linestyle=':')
+        ax.grid(True, linestyle=":")
         plt.tight_layout()
         plt.show()
 

@@ -137,8 +137,8 @@
   <widget class="QDialogButtonBox" name="buttonBox_Profile">
    <property name="geometry">
     <rect>
-     <x>310</x>
-     <y>460</y>
+     <x>300</x>
+     <y>450</y>
      <width>171</width>
      <height>31</height>
     </rect>
