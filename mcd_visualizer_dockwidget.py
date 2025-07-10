@@ -1008,7 +1008,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def cambio_epoca_profile(self, epoca):
         carpeta = self.lista_carpetas.get(epoca)
         if carpeta is None:
-            QMessageBox.warning(self, "Error", f"Escenario desconocido: {epoca}")
+            QMessageBox.warning(self, "Error", f"Unknown scenario: {epoca}")
             return
 
         ruta_carpeta = os.path.join(self.ruta, carpeta)
@@ -1016,7 +1016,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         try:
             archivos = sorted(f for f in os.listdir(ruta_carpeta) if f.endswith("_me.nc") and "thermo" not in f.lower())
         except FileNotFoundError:
-            QMessageBox.warning(self, "Error", f"Carpeta no encontrada:\n{ruta_carpeta}")
+            QMessageBox.warning(self, "Error", f"File not found:\n{ruta_carpeta}")
             archivos = []
 
         prev = self.Combo_Archivo_Profile.currentText()
@@ -1311,85 +1311,119 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             QMessageBox.warning(self, "Profile", "Select a variable to plot")
             return
 
-        # 1) carga y fija las dimensiones NO-ESPACIALES
         var = sel_items[0].data(Qt.UserRole)
         da = self.ds[var]
         desc = self.variable_descriptions.get(var, var)
         fixed = {}
 
-        # Time
-        if "Local Time" not in (x_axis, y_axis):
-            txt = self.Combo_Hora_Profile.currentText()
-            disp = f"{txt} h"
-            if ":" in txt:
-                h, m = map(int, txt.split(":"))
-                val_time = h + m/60.0
+        if "Time" in da.dims and "Local Time" in (x_axis, y_axis):
+            if not self.time_raw_profile:
+                t_vals = self.ds.Time.values.astype(float)
+                t_min, t_max = t_vals.min(), t_vals.max()
+                if self.time_step_profile == "1 hour":
+                    step = 1.0
+                elif self.time_step_profile == "30 min":
+                    step = 0.5
+                elif self.time_step_profile == "15 min":
+                    step = 0.25
+                else:
+                    step = 1.0
+                grid = np.arange(t_min, t_max + 1e-6, step)
+                da = da.interp(Time=grid, method="linear")
+
+        elif "Time" in da.dims and "Local Time" not in (x_axis, y_axis):
+            time_str = self.Combo_Hora_Profile.currentText()
+            if self.time_raw_profile:
+                idx = self.Combo_Hora_Profile.currentIndex()
+                da = da.isel(Time=idx)
             else:
-                val_time = float(txt)
-            fixed["Local Time"] = disp
-            da = da.sel(Time=val_time)
+                h, m = map(int, time_str.split(":"))
+                user_t = h + m / 60.0
+                t_min = float(self.ds.Time.values.min())
+                t_max = float(self.ds.Time.values.max())
+                if user_t >= t_min:
+                    da = da.interp(Time=user_t, method="linear")
+                else:
+                    frac = user_t / t_min
+                    v_low = da.sel(Time=t_max)
+                    v_high = da.sel(Time=t_min)
+                    da = v_low * (1 - frac) + v_high * frac
+            fixed["Local Time"] = f"{time_str} h"
 
-        # Altitude
-        if "Altitude" not in (x_axis, y_axis) and "altitude" in da.dims:
-            txt = self.Combo_Altitud_Profile.currentText()
-            disp = f"{txt} km"
-            val_alt = float(txt)
-            fixed["Altitude"] = disp
-            da = da.sel(altitude=val_alt, method="nearest")
+        if "altitude" in da.dims and "Altitude" in (x_axis, y_axis):
+            pass
 
-        # 2) recortes espaciales o fijaciones
+        elif "altitude" in da.dims:
+            if self.alt_raw_profile:
+                idx = self.Combo_Altitud_Profile.currentIndex()
+                da = da.isel(altitude=idx)
+                fixed["Altitude"] = f"{self.Combo_Altitud_Profile.currentText()} km"
+            else:
+                text = self.Interpolate_Altitude_Profile.text()
+                if not text.isdigit():
+                    QMessageBox.warning(self, "Altitude", "Introduce un valor entero de altura en metros")
+                    return
+                v_m = int(text)
+                v_m = max(5, min(108000, v_m))
+                self.Interpolate_Altitude_Profile.setText(str(v_m))
+                km = v_m / 1000.0
+                da = da.interp(altitude=km, method="linear")
+                fixed["Altitude"] = f"{km:.4f} km"
+
         full_map = self.Check_Mapa_Profile.isChecked()
         lat_min = float(self.Combo_Latitud_Min_Profile.currentText())
         lat_max = float(self.Combo_Latitud_Max_Profile.currentText())
         lon_min = float(self.Combo_Longitud_Min_Profile.currentText())
         lon_max = float(self.Combo_Longitud_Max_Profile.currentText())
 
-        # validación de rangos (solo cuando no es full map y el eje está activo)
-        if not full_map:
-            if "Latitude" in (x_axis, y_axis) and lat_min >= lat_max:
-                QMessageBox.warning(self, "Invalid latitude range",
-                                    "Min latitude must be lower than max latitude")
-                return
-            if "Longitude" in (x_axis, y_axis) and lon_min >= lon_max:
-                QMessageBox.warning(self, "Invalid longitude range",
-                                    "Min longitude must be lower than max longitude")
-                return
-
-        # LATITUD
-        lat_vals = da.latitude.values
-        if "Latitude" in (x_axis, y_axis):
-            # perfil 1D ó 2D en latitud: slice dinámico según orden
-            if not full_map:
-                if lat_vals[0] < lat_vals[-1]:
-                    da = da.sel(latitude=slice(lat_min, lat_max))
+        if "latitude" in da.dims:
+            if "Latitude" in (x_axis, y_axis):
+                if self.lat_raw_profile:
+                    if not full_map:
+                        vals = da.latitude.values
+                        if vals[0] < vals[-1]:
+                            da = da.sel(latitude=slice(lat_min, lat_max))
+                        else:
+                            da = da.sel(latitude=slice(lat_max, lat_min))
                 else:
-                    da = da.sel(latitude=slice(lat_max, lat_min))
-        else:
-            # latitude fija a lat_min con nearest
-            da = da.sel(latitude=lat_min, method="nearest")
-            fixed["Latitude"] = f"{lat_min}°"
+                    if full_map:
+                        lo, hi = self.ds.latitude.values.min(), self.ds.latitude.values.max()
+                    else:
+                        lo, hi = lat_min, lat_max
+                    step = float(self.lat_step_profile)
+                    grid = np.arange(lo, hi + 1e-6, step)
+                    da = da.interp(latitude=grid, method="linear")
+            else:
+                da = da.sel(latitude=lat_min, method="nearest")
+                fixed["Latitude"] = f"{lat_min}°"
 
-        # LONGITUD
-        lon_vals = da.longitude.values
-        if "Longitude" in (x_axis, y_axis):
-            if not full_map:
-                if lon_vals[0] < lon_vals[-1]:
-                    da = da.sel(longitude=slice(lon_min, lon_max))
+        if "longitude" in da.dims:
+            if "Longitude" in (x_axis, y_axis):
+                if self.lon_raw_profile:
+                    if not full_map:
+                        vals = da.longitude.values
+                        if vals[0] < vals[-1]:
+                            da = da.sel(longitude=slice(lon_min, lon_max))
+                        else:
+                            da = da.sel(longitude=slice(lon_max, lon_min))
                 else:
-                    da = da.sel(longitude=slice(lon_max, lon_min))
-        else:
-            da = da.sel(longitude=lon_min, method="nearest")
-            fixed["Longitude"] = f"{lon_min}°"
+                    if full_map:
+                        lo, hi = self.ds.longitude.values.min(), self.ds.longitude.values.max()
+                    else:
+                        lo, hi = lon_min, lon_max
+                    step = float(self.lon_step_profile)
+                    grid = np.arange(lo, hi + 1e-6, step)
+                    da = da.interp(longitude=grid, method="linear")
+            else:
+                da = da.sel(longitude=lon_min, method="nearest")
+                fixed["Longitude"] = f"{lon_min}°"
 
-        # 3) preparación del gráfico
         dims_left = list(da.dims)
         fig, ax = plt.subplots()
 
-        # 1D profile: aparece “Variable” en uno de los ejes
         if "Variable" in (x_axis, y_axis):
             if len(dims_left) != 1:
-                QMessageBox.warning(self, "Profile",
-                                    "For 1D profile you must leave only one free dimension")
+                QMessageBox.warning(self, "Profile","For 1D profile you must leave only one free dimension")
                 return
             d = dims_left[0]
             coords = da.coords[d].values
@@ -1401,29 +1435,22 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 ax.plot(coords, vals, "-o")
                 xlabel, ylabel = d, desc
 
-        # 2D profile: dos dimensiones libres
         else:
             if len(dims_left) != 2:
-                QMessageBox.warning(self, "Profile",
-                                    "For 2D profile you must leave two free dimensions")
+                QMessageBox.warning(self, "Profile","For 2D profile you must leave two free dimensions")
                 return
-            gui2dim = {
-                "Local Time": "Time", "Altitude": "altitude",
-                "Latitude": "latitude", "Longitude": "longitude"
-            }
+            gui2dim = {"Local Time": "Time", "Altitude": "altitude","Latitude": "latitude", "Longitude": "longitude"}
+
             xdim = gui2dim[x_axis]
             ydim = gui2dim[y_axis]
             arr = da.transpose(ydim, xdim)
             xs = arr.coords[xdim].values
             ys = arr.coords[ydim].values
             zs = arr.values
-            mesh = ax.pcolormesh(xs, ys, zs, shading="auto",
-                                 cmap="inferno",
-                                 vmin=zs.min(), vmax=zs.max())
+            mesh = ax.pcolormesh(xs, ys, zs, shading="auto",cmap="inferno",vmin=zs.min(), vmax=zs.max())
             fig.colorbar(mesh, ax=ax).set_label(desc)
             xlabel, ylabel = x_axis, y_axis
 
-        # 4) etiquetas y título
         suffix = {
             "Time": " (h)", "altitude": " (km)",
             "latitude": " (º)", "longitude": " (º)",
