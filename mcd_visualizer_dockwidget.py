@@ -63,7 +63,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             "Yearly Average": "clim_aveEUV",
             "Cold": "cold",
             "Warm": "warm",
-            "Stormy": "strm",
+            "Dust Storm": "strm",
             "Martian Year 24": "MY24",
             "Martian Year 25": "MY25",
             "Martian Year 26": "MY26",
@@ -1437,23 +1437,19 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         elif "altitude" in da.dims:
             if self.alt_raw_profile:
-                # Si está en modo raw, se selecciona por indice del combo de altitud
                 idx = self.Combo_Altitud_Profile.currentIndex()
                 da = da.isel(altitude=idx)
                 fixed["Altitude"] = f"{self.Combo_Altitud_Profile.currentText()} km"
             else:
-                # Si esta en modo interpolate, se valida el texto, se pasa a km y se interpola
                 text = self.Interpolate_Altitude_Profile.text()
                 if not text.isdigit():
                     QMessageBox.warning(self, "Altitude", "Introduce un valor entero de altura en metros")
                     return
                 v_m = int(text)
-                # Nos aseguramos de que está dentro de los límites
                 v_m = max(5, min(108000, v_m))
                 self.Interpolate_Altitude_Profile.setText(str(v_m))
                 km = v_m / 1000.0
                 da = da.interp(altitude=km, method="linear")
-                # Se pasa al array de variables fijadas
                 fixed["Altitude"] = f"{km:.4f} km"
 
         # Leemos si estamos en modo full map y los valores minimos y maximos para recortar en lat y lon
@@ -1463,11 +1459,20 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         lon_min = float(self.Combo_Longitud_Min_Profile.currentText())
         lon_max = float(self.Combo_Longitud_Max_Profile.currentText())
 
-        # Se procesa latitude: Si es eje se traza, si no lo es, se fija/interpola en un punto del espacio
+        #Validate ranges if not showing full map
+        if not self.Check_Mapa_Profile.isChecked():
+            if lat_min >= lat_max:
+                QMessageBox.warning(self, "Invalid latitude range",
+                                    "Min latitude must be lower than max latitude")
+                return
+            if lon_min >= lon_max:
+                QMessageBox.warning(self, "Invalid longitude range",
+                                    "Min longitude must be lower than max longitude")
+                return
+
         if "latitude" in da.dims:
             if "Latitude" in (x_axis, y_axis):
                 if self.lat_raw_profile:
-                    # Raw data + slice respetando inversión del array
                     if not full_map:
                         vals = da.latitude.values
                         if vals[0] < vals[-1]:
@@ -1480,17 +1485,16 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     else:
                         lo, hi = lat_min, lat_max
                     step = float(self.lat_step_profile)
+                    # Igual que en Map Tool: rango desde lo hasta hi con step
                     grid = np.arange(lo, hi + 1e-6, step)
                     da = da.interp(latitude=grid, method="linear")
             else:
-                # Si no es eje, se permite o bien raw o interpolate en un único valor
                 if self.lat_raw_profile:
                     da = da.sel(latitude=lat_min, method="nearest")
                 else:
-                    da = da.interp(latitude=lat_min, method = "linear")
+                    da = da.interp(latitude=lat_min, method="linear")
                 fixed["Latitude"] = f"{lat_min}°"
 
-        # Igual que longitude
         if "longitude" in da.dims:
             if "Longitude" in (x_axis, y_axis):
                 if self.lon_raw_profile:
@@ -1512,7 +1516,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 if self.lon_raw_profile:
                     da = da.sel(longitude=lon_min, method="nearest")
                 else:
-                    da = da.interp(longitude=lon_min, method = "linear")
+                    da = da.interp(longitude=lon_min, method="linear")
                 fixed["Longitude"] = f"{lon_min}°"
 
         # Se prepara la figura de Matplotlib

@@ -56,7 +56,7 @@
     </property>
     <widget class="QWidget" name="Map_Tool">
      <attribute name="title">
-      <string>Map Tool</string>
+      <string>Raster Tool</string>
      </attribute>
      <widget class="QPushButton" name="Push_Reset">
       <property name="geometry">
@@ -178,7 +178,7 @@
       </item>
       <item>
        <property name="text">
-        <string>Stormy</string>
+        <string>Dust Storm</string>
        </property>
       </item>
       <item>
@@ -605,9 +605,9 @@
      <widget class="QListWidget" name="Combo_Variable">
       <property name="geometry">
        <rect>
-        <x>0</x>
+        <x>10</x>
         <y>420</y>
-        <width>371</width>
+        <width>361</width>
         <height>241</height>
        </rect>
       </property>
@@ -721,7 +721,7 @@
      <widget class="QLabel" name="Label_Archivo_2">
       <property name="geometry">
        <rect>
-        <x>290</x>
+        <x>280</x>
         <y>60</y>
         <width>81</width>
         <height>20</height>
@@ -947,7 +947,7 @@
      <widget class="QLabel" name="Label_Hora_Local_2">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>30</x>
         <y>190</y>
         <width>111</width>
         <height>21</height>
@@ -991,7 +991,7 @@
      <widget class="QLabel" name="Label_Altitud_14">
       <property name="geometry">
        <rect>
-        <x>240</x>
+        <x>260</x>
         <y>190</y>
         <width>71</width>
         <height>21</height>
