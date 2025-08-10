@@ -20,6 +20,7 @@ from .interp_config_dialog import InterpConfigDialog
 from .interp_config_dialog_profile import InterpConfigDialogProfile
 
 
+
 # Carga de la UI principal generada con Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'mcd_visualizer_dockwidget_base_profiles.ui'))
 
@@ -30,6 +31,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def __init__(self, parent=None):
         super(MCDVisualizerDockWidget, self).__init__(parent)
         self.setupUi(self) # Monta widgets y layouts definidos en el .ui
+
+        osr.DontUseExceptions() #Silencia avisos al usar IAU 49900 como CSR, ademas de mantener modo sin excepciones
 
         # Flags de interpolación para Map Tool:
         self.time_raw = True #Valor por defecto, si esta a true usa raw data, si esta a false, usa interpolate data
@@ -414,7 +417,11 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.ds = ds_nuevo
 
-        prev_vars = [item.data(Qt.UserRole) for item in self.Combo_Variable.selectedItems()] #We save already selected variables for its name in "crude"
+        prev_vars = []
+
+        for item in self.Combo_Variable.selectedItems():
+            prev_vars.append(item.data(Qt.UserRole))
+
         self.Combo_Variable.clear()
 
         for varname in self.ds.data_vars.keys():
@@ -754,12 +761,25 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         plugin_dir = os.path.dirname(__file__)
         origen = os.path.join(plugin_dir, "mola32_isolines.tif")
 
+        mola_ds = gdal.OpenEx(origen, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"])
+        if mola_ds:
+            srs = osr.SpatialReference()
+            srs.SetFromUserInput("IAU_2015:49900")
+            srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            mola_ds.SetProjection(srs.ExportToWkt())
+            mola_ds = None
+
+        max_lon_mcd = 174.375 # Limita el tamaño del mola32_isolines para que se ajuste a las dimensiones de datos NetCDF
+
         # Si el usuario no muestra el mapa completo, recorta el GeoTIFF al rectángulo seleccionado
         if not self.Check_Mapa.isChecked():
             lon_min = float(self.Combo_Longitud_Min.currentText())
             lon_max = float(self.Combo_Longitud_Max.currentText())
             lat_min = float(self.Combo_Latitud_Min.currentText())
             lat_max = float(self.Combo_Latitud_Max.currentText())
+
+            if lon_max > max_lon_mcd:
+                lon_max = max_lon_mcd
 
             # Opciones para GDAL Translate: define la ventana de recorte con projWin
             opts = gdal.TranslateOptions(format="GTiff",projWin=[lon_min, lat_max, lon_max, lat_min])
@@ -768,8 +788,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             gdal.Translate(tmp_tif, origen, options=opts)
             raster_path = tmp_tif
         else:
-            #Si muestra mapa completo, no recorta
-            raster_path = origen
+            #Si muestra mapa completo, recorta igualmente para ajustar imagen
+            opts = gdal.TranslateOptions(format="GTiff",projWin=[-180, 90, max_lon_mcd, -90])
+            tmp_tif = os.path.join(tempfile.gettempdir(), "mola_crop_full.tif")
+            # Ejecuta el recorte
+            gdal.Translate(tmp_tif, origen, options=opts)
+            raster_path = tmp_tif
 
         # Abre el ráster resultante para leerlo
         ds = gdal.Open(raster_path)
@@ -841,7 +865,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Calcula filas y columnas que contienen el array
         nrows, ncols = arr.shape
-        # Calcula resolución espaical del array a partir de los vectores de coordenadas
+        # Calcula resolución espacial del array a partir de los vectores de coordenadas
         xres = (lon[-1] - lon[0]) / ncols
         yres = (lat[-1] - lat[0]) / nrows
 
@@ -850,9 +874,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         ds = drv.Create(path, ncols, nrows, 1, gdal.GDT_Float32)
         # Define la transformación georeferencial, calculando el origen y resoluciones calculadas
         ds.SetGeoTransform((lon[0], xres, 0, lat[-1], 0, -yres))
-        # Crea un objeto de tipo SpatialReference y lo fija a EPSG:4326
+        # Crea un objeto de tipo SpatialReference y lo fija a IAU_49900
         srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326)
+        srs.SetFromUserInput("IAU_2015:49900")
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         ds.SetProjection(srs.ExportToWkt())
         # Escribe los datos del array en la banda 1 del ráster
         ds.GetRasterBand(1).WriteArray(arr)
@@ -1104,7 +1129,11 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.ds = ds_nuevo
 
-        prev_vars = [item.data(Qt.UserRole) for item in self.Combo_Variable_Profile.selectedItems()] #We save already selected variables for its name in "crude"
+        prev_vars = []
+
+        for item in self.Combo_Variable_Profile.selectedItems():
+            prev_vars.append(item.data(Qt.UserRole))
+
         self.Combo_Variable_Profile.clear()
 
         for varname in self.ds.data_vars.keys():
@@ -1461,14 +1490,20 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         #Validate ranges if not showing full map
         if not self.Check_Mapa_Profile.isChecked():
-            if lat_min >= lat_max:
-                QMessageBox.warning(self, "Invalid latitude range",
-                                    "Min latitude must be lower than max latitude")
-                return
-            if lon_min >= lon_max:
-                QMessageBox.warning(self, "Invalid longitude range",
-                                    "Min longitude must be lower than max longitude")
-                return
+            lat_min_enabled = self.Combo_Latitud_Min_Profile.isEnabled()
+            lat_max_enabled = self.Combo_Latitud_Max_Profile.isEnabled()
+            lon_min_enabled = self.Combo_Longitud_Min_Profile.isEnabled()
+            lon_max_enabled = self.Combo_Longitud_Max_Profile.isEnabled()
+            if lat_min_enabled and lat_max_enabled:
+                if lat_min >= lat_max:
+                    QMessageBox.warning(self, "Invalid latitude range",
+                                        "Min latitude must be lower than max latitude")
+                    return
+            if lon_min_enabled and lon_max_enabled:
+                if lon_min >= lon_max:
+                    QMessageBox.warning(self, "Invalid longitude range",
+                                        "Min longitude must be lower than max longitude")
+                    return
 
         if "latitude" in da.dims:
             if "Latitude" in (x_axis, y_axis):

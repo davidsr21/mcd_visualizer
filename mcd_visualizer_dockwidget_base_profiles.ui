@@ -103,7 +103,7 @@
      <widget class="QLabel" name="Label_Archivo">
       <property name="geometry">
        <rect>
-        <x>280</x>
+        <x>250</x>
         <y>60</y>
         <width>81</width>
         <height>20</height>
@@ -119,15 +119,15 @@
        </font>
       </property>
       <property name="text">
-       <string>File</string>
+       <string>Data File</string>
       </property>
      </widget>
      <widget class="QLabel" name="Label_Epoca">
       <property name="geometry">
        <rect>
-        <x>30</x>
+        <x>10</x>
         <y>60</y>
-        <width>111</width>
+        <width>151</width>
         <height>21</height>
        </rect>
       </property>
@@ -141,7 +141,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Year Time</string>
+       <string>Scenario Selector</string>
       </property>
      </widget>
      <widget class="QComboBox" name="Combo_Epoca">
@@ -699,9 +699,9 @@
      <widget class="QLabel" name="Label_Epoca_2">
       <property name="geometry">
        <rect>
-        <x>40</x>
+        <x>20</x>
         <y>60</y>
-        <width>111</width>
+        <width>151</width>
         <height>21</height>
        </rect>
       </property>
@@ -715,13 +715,13 @@
        </font>
       </property>
       <property name="text">
-       <string>Year Time</string>
+       <string>Scenario Selector</string>
       </property>
      </widget>
      <widget class="QLabel" name="Label_Archivo_2">
       <property name="geometry">
        <rect>
-        <x>280</x>
+        <x>260</x>
         <y>60</y>
         <width>81</width>
         <height>20</height>
@@ -737,7 +737,7 @@
        </font>
       </property>
       <property name="text">
-       <string>File</string>
+       <string>Data File</string>
       </property>
      </widget>
      <widget class="QPushButton" name="Push_Reset_Profile">
