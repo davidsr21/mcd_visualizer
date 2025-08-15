@@ -619,6 +619,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def reset_all(self):
         self.Combo_Epoca.setCurrentIndex(0)
 
+        self.Combo_Estadistica.setCurrentText("me")
+
         if self.Combo_Archivo.count() > 0:
             self.Combo_Archivo.setCurrentIndex(0)
 
@@ -1453,6 +1455,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if self.Combo_Archivo_Profile.count() > 0:
             self.Combo_Archivo_Profile.setCurrentIndex(0)
 
+        self.Combo_Estadistica_Profile.setCurrentText("me")
+
         self.time_raw_profile = True
         self.time_step_profile = "1 hour"
         self.refresh_time_combo_profile()
@@ -1701,7 +1705,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             xs = arr.coords[xdim].values
             ys = arr.coords[ydim].values
             zs = arr.values
-            mesh = ax.pcolormesh(xs, ys, zs, shading="auto",cmap="inferno",vmin=zs.min(), vmax=zs.max())
+            mesh = ax.pcolormesh(xs, ys, zs, shading="auto", cmap="inferno", vmin=zs.min(), vmax=zs.max())
             fig.colorbar(mesh, ax=ax).set_label(desc)
             xlabel, ylabel = x_axis, y_axis
 
