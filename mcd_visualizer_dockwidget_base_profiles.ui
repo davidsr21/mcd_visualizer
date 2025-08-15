@@ -103,7 +103,7 @@
      <widget class="QLabel" name="Label_Archivo">
       <property name="geometry">
        <rect>
-        <x>250</x>
+        <x>270</x>
         <y>60</y>
         <width>81</width>
         <height>20</height>
@@ -245,7 +245,7 @@
      <widget class="QComboBox" name="Combo_Archivo">
       <property name="geometry">
        <rect>
-        <x>220</x>
+        <x>240</x>
         <y>90</y>
         <width>141</width>
         <height>20</height>
@@ -264,7 +264,7 @@
       <property name="geometry">
        <rect>
         <x>240</x>
-        <y>180</y>
+        <y>190</y>
         <width>171</width>
         <height>21</height>
        </rect>
@@ -286,7 +286,7 @@
       <property name="geometry">
        <rect>
         <x>220</x>
-        <y>200</y>
+        <y>210</y>
         <width>171</width>
         <height>21</height>
        </rect>
@@ -311,7 +311,7 @@
       <property name="geometry">
        <rect>
         <x>230</x>
-        <y>220</y>
+        <y>230</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -332,7 +332,7 @@
       <property name="geometry">
        <rect>
         <x>170</x>
-        <y>150</y>
+        <y>160</y>
         <width>131</width>
         <height>21</height>
        </rect>
@@ -354,7 +354,7 @@
       <property name="geometry">
        <rect>
         <x>260</x>
-        <y>120</y>
+        <y>130</y>
         <width>71</width>
         <height>21</height>
        </rect>
@@ -376,7 +376,7 @@
       <property name="geometry">
        <rect>
         <x>230</x>
-        <y>150</y>
+        <y>160</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -422,7 +422,7 @@
       <property name="geometry">
        <rect>
         <x>40</x>
-        <y>120</y>
+        <y>130</y>
         <width>111</width>
         <height>21</height>
        </rect>
@@ -557,7 +557,7 @@
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>150</y>
+        <y>160</y>
         <width>141</width>
         <height>20</height>
        </rect>
@@ -673,7 +673,7 @@
       <property name="geometry">
        <rect>
         <x>180</x>
-        <y>220</y>
+        <y>230</y>
         <width>51</width>
         <height>21</height>
        </rect>
@@ -691,6 +691,46 @@
        <string>Unit: m</string>
       </property>
      </widget>
+     <widget class="QLabel" name="Label_Epoca_5">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>60</y>
+        <width>71</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Statistic</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="Combo_Estadistica">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>90</y>
+        <width>61</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="Profile_Tool">
      <attribute name="title">
@@ -699,7 +739,7 @@
      <widget class="QLabel" name="Label_Epoca_2">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>10</x>
         <y>60</y>
         <width>151</width>
         <height>21</height>
@@ -721,7 +761,7 @@
      <widget class="QLabel" name="Label_Archivo_2">
       <property name="geometry">
        <rect>
-        <x>260</x>
+        <x>270</x>
         <y>60</y>
         <width>81</width>
         <height>20</height>
@@ -764,7 +804,7 @@
      <widget class="QComboBox" name="Combo_Epoca_Profile">
       <property name="geometry">
        <rect>
-        <x>20</x>
+        <x>10</x>
         <y>90</y>
         <width>141</width>
         <height>20</height>
@@ -883,7 +923,7 @@
      <widget class="QComboBox" name="Combo_Archivo_Profile">
       <property name="geometry">
        <rect>
-        <x>230</x>
+        <x>240</x>
         <y>90</y>
         <width>141</width>
         <height>20</height>
@@ -1491,6 +1531,46 @@
       </property>
       <property name="text">
        <string>Show full map (Ignore Lat/Lon)</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="Label_Archivo_3">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>60</y>
+        <width>81</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+        <underline>true</underline>
+        <kerning>true</kerning>
+       </font>
+      </property>
+      <property name="text">
+       <string>Statistic</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="Combo_Estadistica_Profile">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>90</y>
+        <width>61</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <weight>50</weight>
+        <bold>false</bold>
+        <kerning>true</kerning>
+       </font>
       </property>
      </widget>
     </widget>
