@@ -8,16 +8,17 @@ import processing
 import matplotlib.pyplot as plt
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, Qt
-from qgis.core import QgsProject,QgsRasterLayer, QgsLineSymbol,QgsSingleBandPseudoColorRenderer,QgsStyle,Qgis, QgsVectorLayer
+from qgis.core import QgsProject,QgsRasterLayer,QgsSingleBandPseudoColorRenderer,QgsStyle,Qgis, QgsVectorLayer, QgsFeature, QgsGeometry, QgsPointXY, QgsLineSymbol, QgsSingleSymbolRenderer
 from osgeo import gdal, osr
-from PyQt5.QtWidgets import QMessageBox, QApplication, QDialog, QDialogButtonBox, QProgressDialog, QScrollArea, QSizePolicy
+from PyQt5.QtWidgets import QMessageBox, QApplication, QDialog, QDialogButtonBox, QProgressDialog
 from qgis.utils import iface
-from qgis.PyQt.QtGui import QColor, QIntValidator
+from qgis.PyQt.QtGui import QColor
 import xarray as xr
 import numpy as np
 from processing.core.Processing import Processing
 from .interp_config_dialog import InterpConfigDialog
 from .interp_config_dialog_profile import InterpConfigDialogProfile
+
 
 
 # Carga de la UI principal generada con Qt Designer
@@ -30,6 +31,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     def __init__(self, parent=None):
         super(MCDVisualizerDockWidget, self).__init__(parent)
         self.setupUi(self) # Monta widgets y layouts definidos en el .ui
+
+        osr.DontUseExceptions() #Silencia avisos al usar IAU 49900 como CSR, ademas de mantener modo sin excepciones
 
         # Flags de interpolación para Map Tool:
         self.time_raw = True #Valor por defecto, si esta a true usa raw data, si esta a false, usa interpolate data
@@ -80,59 +83,79 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         #Diccionario que mapea nombre original de la variable con nombre que aparece en MCD
         self.variable_descriptions = {
-            "tsurf":"Surface temperature (K)",
-            "ps":"Surface pressure (Pa)",
-            "co2ice":"CO₂ ice cover (kg m⁻²)",
-            "fluxsurf_lw":"LW (thermal IR) radiative flux to surface (W m⁻²)",
-            "fluxtop_lw":"LW (thermal IR) radiative flux to space (W m⁻²)",
-            "fluxsurf_dn_sw":"SW (solar) incoming radiative flux to surface (W m⁻²)",
-            "fluxsurf_dir_dn_sw":"SW (solar) direct incoming radiative flux to surface (W m⁻²)",
-            "fluxsurf_up_sw":"SW (solar) reflected radiative flux from surface (W m⁻²)",
-            "fluxtop_up_sw":"SW (solar) outgoing radiative flux to space (W m⁻²)",
-            "fluxtop_dn_sw":"SW (solar) incoming radiative flux from space (W m⁻²)",
-            "tau_pref_gcm":"Monthly mean visible dust optical depth at 610 Pa (unitless)",
-            "col_h2ovapor":"Water vapor column (kg m⁻²)",
-            "col_h2oice":"Water ice column (kg m⁻²)",
-            "zmax":"Height of thermals in the PBL (m)",
-            "hfmax":"Maximum thermals heat flux (K·m/s)",
-            "wstar":"Vertical velocity scale in thermals (m/s)",
-            "h2oice":"H₂O ice cover (seasonal frost) (kg m⁻²)",
-            "c_co2":"CO₂ column (molecules/cm²)",
-            "c_co":"CO column (molecules/cm²)",
-            "c_o":"O column (molecules/cm²)",
-            "c_o2":"O₂ column (molecules/cm²)",
-            "c_o3":"O₃ column (molecules/cm²)",
-            "c_h":"H column (molecules/cm²)",
-            "c_h2":"H₂ column (molecules/cm²)",
-            "c_n2":"N₂ column (molecules/cm²)",
-            "c_ar":"Ar column (molecules/cm²)",
-            "c_he":"He column (molecules/cm²)",
-            "c_elec":"Total Electronic Content (TEC) (electrons/cm²)",
-            "rho":"Atmospheric density (kg m⁻³)",
-            "temp":"Atmospheric temperature (K)",
-            "u":"Zonal (East–West) wind (m/s)",
-            "v":"Meridional (North–South) wind (m/s)",
-            "w":"Vertical (up–down) wind (m/s)",
-            "vmr_h2ovapor":"Water vapor volume mixing ratio (mol/mol)",
-            "vmr_h2oice":"Water ice volume mixing ratio (mol/mol)",
-            "vmr_co2":"CO₂ volume mixing ratio (mol/mol)",
-            "vmr_co":"CO volume mixing ratio (mol/mol)",
-            "vmr_o":"O volume mixing ratio (mol/mol)",
-            "vmr_o2":"O₂ volume mixing ratio (mol/mol)",
-            "vmr_o3":"O₃ volume mixing ratio (mol/mol)",
-            "vmr_h":"H volume mixing ratio (mol/mol)",
-            "vmr_h2":"H₂ volume mixing ratio (mol/mol)",
-            "vmr_n2":"N₂ volume mixing ratio (mol/mol)",
-            "vmr_ar":"Ar volume mixing ratio (mol/mol)",
-            "vmr_he":"He volume mixing ratio (mol/mol)",
-            "vmr_elec":"Electron number density (mol/mol)",
-            "dustq":"Dust mass mixing ratio (kg/kg)",
-            "reffdust":"Dust effective radius (m)",
-            "reffice":"Water ice effective radius (m)",
+            # --- ME (mean) ---
+            "tsurf": "Surface temperature (K)",
+            "ps": "Surface pressure (Pa)",
+            "co2ice": "CO₂ ice cover (kg m⁻²)",
+            "fluxsurf_lw": "LW (thermal IR) radiative flux to surface (W m⁻²)",
+            "fluxtop_lw": "LW (thermal IR) radiative flux to space (W m⁻²)",
+            "fluxsurf_dn_sw": "SW (solar) incoming radiative flux to surface (W m⁻²)",
+            "fluxsurf_dir_dn_sw": "SW (solar) direct incoming radiative flux to surface (W m⁻²)",
+            "fluxsurf_up_sw": "SW (solar) reflected radiative flux from surface (W m⁻²)",
+            "fluxtop_up_sw": "SW (solar) outgoing radiative flux to space (W m⁻²)",
+            "fluxtop_dn_sw": "SW (solar) incoming radiative flux from space (W m⁻²)",
+            "tau_pref_gcm": "Monthly mean visible dust optical depth at 610 Pa (unitless)",
+            "col_h2ovapor": "Water vapor column (kg m⁻²)",
+            "col_h2oice": "Water ice column (kg m⁻²)",
+            "zmax": "Height of thermals in the PBL (m)",
+            "hfmax": "Maximum thermals heat flux (K·m/s)",
+            "wstar": "Vertical velocity scale in thermals (m/s)",
+            "h2oice": "H₂O ice cover (seasonal frost) (kg m⁻²)",
+            "c_co2": "CO₂ column (molecules/cm²)",
+            "c_co": "CO column (molecules/cm²)",
+            "c_o": "O column (molecules/cm²)",
+            "c_o2": "O₂ column (molecules/cm²)",
+            "c_o3": "O₃ column (molecules/cm²)",
+            "c_h": "H column (molecules/cm²)",
+            "c_h2": "H₂ column (molecules/cm²)",
+            "c_n2": "N₂ column (molecules/cm²)",
+            "c_ar": "Ar column (molecules/cm²)",
+            "c_he": "He column (molecules/cm²)",
+            "c_elec": "Total Electronic Content (TEC) (electrons/cm²)",
+            "rho": "Atmospheric density (kg m⁻³)",
+            "temp": "Atmospheric temperature (K)",
+            "u": "Zonal (East–West) wind (m/s)",
+            "v": "Meridional (North–South) wind (m/s)",
+            "w": "Vertical (up–down) wind (m/s)",
+            "vmr_h2ovapor": "Water vapor volume mixing ratio (mol/mol)",
+            "vmr_h2oice": "Water ice volume mixing ratio (mol/mol)",
+            "vmr_co2": "CO₂ volume mixing ratio (mol/mol)",
+            "vmr_co": "CO volume mixing ratio (mol/mol)",
+            "vmr_o": "O volume mixing ratio (mol/mol)",
+            "vmr_o2": "O₂ volume mixing ratio (mol/mol)",
+            "vmr_o3": "O₃ volume mixing ratio (mol/mol)",
+            "vmr_h": "H volume mixing ratio (mol/mol)",
+            "vmr_h2": "H₂ volume mixing ratio (mol/mol)",
+            "vmr_n2": "N₂ volume mixing ratio (mol/mol)",
+            "vmr_ar": "Ar volume mixing ratio (mol/mol)",
+            "vmr_he": "He volume mixing ratio (mol/mol)",
+            "vmr_elec": "Electron number density (mol/mol)",
+            "dustq": "Dust mass mixing ratio (kg/kg)",
+            "reffdust": "Dust effective radius (m)",
+            "reffice": "Water ice effective radius (m)",
+
+            # --- SD (standard deviation / RMS) ---
+            "rmstsurf": "RMS of surface temperature (K)",
+            "rmsps": "RMS of surface pressure (Pa)",
+            "rmstau_pref_gcm": "RMS of dust optical depth at 610 Pa (unitless)",
+            "armstemp": "Altitude-wise RMS of atmospheric temperature (K)",
+            "rmstemp": "Pressure-wise RMS of atmospheric temperature (K)",
+            "armsrho": "Altitude-wise RMS of atmospheric density (kg m⁻³)",
+            "rmsrho": "Pressure-wise RMS of atmospheric density (kg m⁻³)",
+            "armsu": "Altitude-wise RMS of zonal (East–West) wind (m/s)",
+            "rmsu": "Pressure-wise RMS of zonal (East–West) wind (m/s)",
+            "armsv": "Altitude-wise RMS of meridional (North–South) wind (m/s)",
+            "rmsv": "Pressure-wise RMS of meridional (North–South) wind (m/s)",
+            "armsw": "Altitude-wise RMS of vertical (up–down) wind (m/s)",
+            "rmsw": "Pressure-wise RMS of vertical (up–down) wind (m/s)",
+            "armspressure": "Altitude-wise RMS of atmospheric pressure (Pa)"
         }
 
         # Inicialización del combo de épocas
         self.Combo_Epoca.clear() # Vacía el combo de selección de época
+        self.Combo_Estadistica.clear()
+        self.Combo_Estadistica.addItems(["me", "sd"])
+        self.Combo_Estadistica.setCurrentText("me")
         self.Combo_Epoca.addItems(list(self.lista_carpetas.keys())) # Añade los nombres de las épocas
         self.Combo_Epoca.setCurrentIndex(0) # Selecciona la primera época por defecto
         self.cambio_epoca(self.Combo_Epoca.currentText()) # Llama a cambio_epoca() para poblar archivos
@@ -155,12 +178,17 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Interpolate_Altitude.clear()  # Limpia cualquier texto previo
         self.Interpolate_Altitude.setPlaceholderText("Introduce altitude (m)") # Texto que indica al usuario como introducir el dato
 
+        self.Combo_Estadistica.currentTextChanged.connect(self.estadistica_changed)  # Salta al cambiar de estadística
+
         # Evaluación inicial de estado de altitud y full map
         self.toggle_altitude_multi() # Habilita control de altitud altitud según variable seleccionada
         self.toggle_map_latlon_mode(self.Check_Mapa.checkState()) # Ajusta recorte vs mapa completo
 
         # Inicialización de pestaña Profile Tool
         self.Combo_Epoca_Profile.clear() # Vacía combo de Profile Épocas
+        self.Combo_Estadistica_Profile.clear()
+        self.Combo_Estadistica_Profile.addItems(["me", "sd"])
+        self.Combo_Estadistica_Profile.setCurrentText("me")
         self.Combo_Epoca_Profile.addItems(list(self.lista_carpetas.keys())) # Añade épocas al combo Profile
         self.Combo_Epoca_Profile.setCurrentIndex(0)  # Selecciona primera época Profile por defecto
         self.Combo_Epoca_Profile.currentTextChanged.connect(self.cambio_epoca_profile) # Señal cambio época Profile
@@ -171,6 +199,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Profile_X.currentIndexChanged.connect(self.on_profile_axes_changed)
         self.Combo_Profile_Y.currentIndexChanged.connect(self.on_profile_axes_changed)
         self.Combo_Variable_Profile.itemSelectionChanged.connect(self.on_profile_axes_changed)
+
+        self.Combo_Estadistica_Profile.currentTextChanged.connect(self.estadistica_changed_profile)  # Salta al cambiar de estadística
 
         self.Push_Reset_Profile.clicked.connect(self.reset_all_profile)
 
@@ -368,35 +398,66 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Longitud_Max.clear()
         self.Combo_Longitud_Max.addItems(labels)
 
+    def estadistica_changed(self):
+        self.cambio_epoca(self.Combo_Epoca.currentText())
+
     def cambio_epoca(self, epoca):
-        #Handler for when the era combo changes: populate the file list
         carpeta = self.lista_carpetas.get(epoca)
-
         if not carpeta:
-            return #Nothing to do if no valid folder
-
-        prev_archivo = self.Combo_Archivo.currentText() #Stores file that was previously selected
-        self.Combo_Archivo.clear()
-
-        folder = os.path.join(self.ruta, carpeta)
-
-        try:
-            archivos = sorted(f for f in os.listdir(folder) if f.endswith("_me.nc") and "thermo" not in f.lower())
-        except FileNotFoundError:
             QMessageBox.warning(self, "Error", "Folder not found")
             return
 
-        self.Combo_Archivo.addItems(archivos)
+        prev_archivo = self.Combo_Archivo.currentData() or self.Combo_Archivo.currentText()
+        self.Combo_Archivo.clear()
 
-        if prev_archivo in archivos:
-            self.Combo_Archivo.setCurrentText(prev_archivo)
-            self.cambio_archivo(prev_archivo)
-        else:
-            if len(archivos) > 0:
-                self.Combo_Archivo.setCurrentIndex(0)
-                self.cambio_archivo(self.Combo_Archivo.currentText())
+        folder = os.path.join(self.ruta, carpeta)
+        stat = self.Combo_Estadistica.currentText().lower()
+
+        try:
+            archivos = []
+            for f in os.listdir(folder):
+                if f.endswith(f"_{stat}.nc") and "thermo" not in f.lower():
+                    archivos.append(f)
+        except FileNotFoundError:
+            QMessageBox.warning(self, "Error", "File not found")
+            return
+
+        for f in archivos:
+            label = f
+            if "_01_" in f:
+                label = "Month 01"
+            elif "_02_" in f:
+                label = "Month 02"
+            elif "_03_" in f:
+                label = "Month 03"
+            elif "_04_" in f:
+                label = "Month 04"
+            elif "_05_" in f:
+                label = "Month 05"
+            elif "_06_" in f:
+                label = "Month 06"
+            elif "_07_" in f:
+                label = "Month 07"
+            elif "_08_" in f:
+                label = "Month 08"
+            elif "_09_" in f:
+                label = "Month 09"
+            elif "_10_" in f:
+                label = "Month 10"
+            elif "_11_" in f:
+                label = "Month 11"
+            elif "_12_" in f:
+                label = "Month 12"
+
+            self.Combo_Archivo.addItem(label, f)
+
+        if self.Combo_Archivo.count() > 0:
+            self.Combo_Archivo.setCurrentIndex(0)
+            self.cambio_archivo(self.Combo_Archivo.currentData())
+
 
     def cambio_archivo(self, archivo_nombre):
+        archivo_nombre = self.Combo_Archivo.currentData() or archivo_nombre
         if not archivo_nombre:
             return
 
@@ -414,7 +475,20 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.ds = ds_nuevo
 
-        prev_vars = [item.data(Qt.UserRole) for item in self.Combo_Variable.selectedItems()] #We save already selected variables for its name in "crude"
+        if self.Combo_Estadistica.currentText() == "sd":
+            self.Combo_Hora.setEnabled(False)
+            self.Combo_Hora.setStyleSheet("QComboBox {background-color: red; }")
+            self.Combo_Hora.setToolTip("Disabled for SD Files (No time dimension)")
+        else:
+            self.Combo_Hora.setEnabled(True)
+            self.Combo_Hora.setStyleSheet("")
+            self.Combo_Hora.setToolTip("")
+
+        prev_vars = []
+
+        for item in self.Combo_Variable.selectedItems():
+            prev_vars.append(item.data(Qt.UserRole))
+
         self.Combo_Variable.clear()
 
         for varname in self.ds.data_vars.keys():
@@ -544,6 +618,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
     def reset_all(self):
         self.Combo_Epoca.setCurrentIndex(0)
+
+        self.Combo_Estadistica.setCurrentText("me")
 
         if self.Combo_Archivo.count() > 0:
             self.Combo_Archivo.setCurrentIndex(0)
@@ -722,6 +798,23 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     continue
 
                 display_name = self.variable_descriptions[varname]
+
+                if self.Combo_Hora.isEnabled() and self.Combo_Hora.count() > 0:
+                    display_name += f" | Time: {self.Combo_Hora.currentText()}"
+
+                if "altitude" in self.ds[varname].dims:
+                    if self.alt_raw:
+                        if self.Combo_Altitud.currentText():
+                            display_name += f" | Alt: {self.Combo_Altitud.currentText()}"
+                    else:
+                        if self.Interpolate_Altitude.text():
+                            display_name += f" | Alt: {self.Interpolate_Altitude.text()}"
+
+                if self.Check_Mapa.isChecked():
+                    display_name += f" | Full Map"
+                else:
+                    display_name+= f" | Lat: {lat_min}...{lat_max} | Lon: {lon_min}...{lon_max}"
+
                 self._mostrar_raster(array, lats, lons, varname, display_name)
 
                 dlg.setValue(idx + 1)
@@ -754,12 +847,25 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         plugin_dir = os.path.dirname(__file__)
         origen = os.path.join(plugin_dir, "mola32_isolines.tif")
 
+        mola_ds = gdal.OpenEx(origen, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"])
+        if mola_ds:
+            srs = osr.SpatialReference()
+            srs.SetFromUserInput("IAU_2015:49900")
+            srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            mola_ds.SetProjection(srs.ExportToWkt())
+            mola_ds = None
+
+        max_lon_mcd = 174.375 # Limita el tamaño del mola32_isolines para que se ajuste a las dimensiones de datos NetCDF
+
         # Si el usuario no muestra el mapa completo, recorta el GeoTIFF al rectángulo seleccionado
         if not self.Check_Mapa.isChecked():
             lon_min = float(self.Combo_Longitud_Min.currentText())
             lon_max = float(self.Combo_Longitud_Max.currentText())
             lat_min = float(self.Combo_Latitud_Min.currentText())
             lat_max = float(self.Combo_Latitud_Max.currentText())
+
+            if lon_max > max_lon_mcd:
+                lon_max = max_lon_mcd
 
             # Opciones para GDAL Translate: define la ventana de recorte con projWin
             opts = gdal.TranslateOptions(format="GTiff",projWin=[lon_min, lat_max, lon_max, lat_min])
@@ -768,8 +874,12 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             gdal.Translate(tmp_tif, origen, options=opts)
             raster_path = tmp_tif
         else:
-            #Si muestra mapa completo, no recorta
-            raster_path = origen
+            #Si muestra mapa completo, recorta igualmente para ajustar imagen
+            opts = gdal.TranslateOptions(format="GTiff",projWin=[-180, 90, max_lon_mcd, -90])
+            tmp_tif = os.path.join(tempfile.gettempdir(), "mola_crop_full.tif")
+            # Ejecuta el recorte
+            gdal.Translate(tmp_tif, origen, options=opts)
+            raster_path = tmp_tif
 
         # Abre el ráster resultante para leerlo
         ds = gdal.Open(raster_path)
@@ -798,7 +908,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
 
         # Load resulting shapefile as a vector layer
-        cont_layer = QgsVectorLayer(result['OUTPUT'], "MOLA Isolines", "ogr")
+        cont_layer = QgsVectorLayer(result['OUTPUT'], "MOLA Isolines Map Tool", "ogr")
         if not cont_layer.isValid():
             QMessageBox.critical(self, "Error", "MOLA isolines could not be created.")
             return
@@ -841,7 +951,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # Calcula filas y columnas que contienen el array
         nrows, ncols = arr.shape
-        # Calcula resolución espaical del array a partir de los vectores de coordenadas
+        # Calcula resolución espacial del array a partir de los vectores de coordenadas
         xres = (lon[-1] - lon[0]) / ncols
         yres = (lat[-1] - lat[0]) / nrows
 
@@ -850,9 +960,10 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         ds = drv.Create(path, ncols, nrows, 1, gdal.GDT_Float32)
         # Define la transformación georeferencial, calculando el origen y resoluciones calculadas
         ds.SetGeoTransform((lon[0], xres, 0, lat[-1], 0, -yres))
-        # Crea un objeto de tipo SpatialReference y lo fija a EPSG:4326
+        # Crea un objeto de tipo SpatialReference y lo fija a IAU_49900
         srs = osr.SpatialReference()
-        srs.ImportFromEPSG(4326)
+        srs.SetFromUserInput("IAU_2015:49900")
+        srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
         ds.SetProjection(srs.ExportToWkt())
         # Escribe los datos del array en la banda 1 del ráster
         ds.GetRasterBand(1).WriteArray(arr)
@@ -1058,6 +1169,9 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Longitud_Max_Profile.clear()
         self.Combo_Longitud_Max_Profile.addItems(labels)
 
+    def estadistica_changed_profile(self):
+        self.cambio_epoca_profile(self.Combo_Epoca_Profile.currentText())
+
     def cambio_epoca_profile(self, epoca):
         carpeta = self.lista_carpetas.get(epoca)
         if carpeta is None:
@@ -1065,28 +1179,54 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
 
         ruta_carpeta = os.path.join(self.ruta, carpeta)
+        stat = self.Combo_Estadistica_Profile.currentText().lower()
 
         try:
-            archivos = sorted(f for f in os.listdir(ruta_carpeta) if f.endswith("_me.nc") and "thermo" not in f.lower())
+            archivos = []
+            for f in os.listdir(ruta_carpeta):
+                if f.endswith(f"_{stat}.nc") and "thermo" not in f.lower():
+                    archivos.append(f)
         except FileNotFoundError:
             QMessageBox.warning(self, "Error", f"File not found:\n{ruta_carpeta}")
-            archivos = []
+            return
 
-        prev = self.Combo_Archivo_Profile.currentText()
-
+        # Limpiar y añadir con label personalizado
         self.Combo_Archivo_Profile.clear()
-        self.Combo_Archivo_Profile.addItems(archivos)
+        for f in archivos:
+            label = f
+            if "_01_" in f:
+                label = "Month 01"
+            elif "_02_" in f:
+                label = "Month 02"
+            elif "_03_" in f:
+                label = "Month 03"
+            elif "_04_" in f:
+                label = "Month 04"
+            elif "_05_" in f:
+                label = "Month 05"
+            elif "_06_" in f:
+                label = "Month 06"
+            elif "_07_" in f:
+                label = "Month 07"
+            elif "_08_" in f:
+                label = "Month 08"
+            elif "_09_" in f:
+                label = "Month 09"
+            elif "_10_" in f:
+                label = "Month 10"
+            elif "_11_" in f:
+                label = "Month 11"
+            elif "_12_" in f:
+                label = "Month 12"
 
-        if prev in archivos:
-            self.Combo_Archivo_Profile.setCurrentText(prev)
-        elif archivos:
+            self.Combo_Archivo_Profile.addItem(label, f)
+
+        if self.Combo_Archivo_Profile.count() > 0:
             self.Combo_Archivo_Profile.setCurrentIndex(0)
-
-        current = self.Combo_Archivo_Profile.currentText()
-        if current:
-            self.cambio_archivo_profile(current)
+            self.cambio_archivo_profile(self.Combo_Archivo_Profile.currentData())
 
     def cambio_archivo_profile(self, archivo_nombre):
+        archivo_nombre = self.Combo_Archivo_Profile.currentData() or archivo_nombre
         if not archivo_nombre:
             return
 
@@ -1104,7 +1244,20 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.ds = ds_nuevo
 
-        prev_vars = [item.data(Qt.UserRole) for item in self.Combo_Variable_Profile.selectedItems()] #We save already selected variables for its name in "crude"
+        if self.Combo_Estadistica_Profile.currentText() == "sd":
+            self.Combo_Hora_Profile.setEnabled(False)
+            self.Combo_Hora_Profile.setStyleSheet("QComboBox {background-color: red; }")
+            self.Combo_Hora_Profile.setToolTip("Disabled for SD Files (No time dimension)")
+        else:
+            self.Combo_Hora_Profile.setEnabled(True)
+            self.Combo_Hora_Profile.setStyleSheet("")
+            self.Combo_Hora_Profile.setToolTip("")
+
+        prev_vars = []
+
+        for item in self.Combo_Variable_Profile.selectedItems():
+            prev_vars.append(item.data(Qt.UserRole))
+
         self.Combo_Variable_Profile.clear()
 
         for varname in self.ds.data_vars.keys():
@@ -1215,7 +1368,11 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             combo.setCurrentIndex(0)
             return
 
-        if x == "Local Time" or y == "Local Time":
+        if self.Combo_Estadistica_Profile.currentText().lower() == "sd":
+            self.Combo_Hora_Profile.setEnabled(False)
+            self.Combo_Hora_Profile.setStyleSheet("QComboBox {background-color: red; }")
+            self.Combo_Hora_Profile.setToolTip("Disabled for SD Files (No time dimension)")
+        elif x == "Local Time" or y == "Local Time":
             self.Combo_Hora_Profile.setEnabled(False)
             self.Combo_Hora_Profile.setStyleSheet("QComboBox{background:red}")
             self.Combo_Hora_Profile.setToolTip("Local Time locked as axis")
@@ -1314,6 +1471,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.Combo_Epoca_Profile.setCurrentIndex(0)
         if self.Combo_Archivo_Profile.count() > 0:
             self.Combo_Archivo_Profile.setCurrentIndex(0)
+
+        self.Combo_Estadistica_Profile.setCurrentText("me")
 
         self.time_raw_profile = True
         self.time_step_profile = "1 hour"
@@ -1443,7 +1602,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             else:
                 text = self.Interpolate_Altitude_Profile.text()
                 if not text.isdigit():
-                    QMessageBox.warning(self, "Altitude", "Introduce un valor entero de altura en metros")
+                    QMessageBox.warning(self, "Altitude", "Do not introduce decimal values")
                     return
                 v_m = int(text)
                 v_m = max(5, min(108000, v_m))
@@ -1461,14 +1620,20 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         #Validate ranges if not showing full map
         if not self.Check_Mapa_Profile.isChecked():
-            if lat_min >= lat_max:
-                QMessageBox.warning(self, "Invalid latitude range",
-                                    "Min latitude must be lower than max latitude")
-                return
-            if lon_min >= lon_max:
-                QMessageBox.warning(self, "Invalid longitude range",
-                                    "Min longitude must be lower than max longitude")
-                return
+            lat_min_enabled = self.Combo_Latitud_Min_Profile.isEnabled()
+            lat_max_enabled = self.Combo_Latitud_Max_Profile.isEnabled()
+            lon_min_enabled = self.Combo_Longitud_Min_Profile.isEnabled()
+            lon_max_enabled = self.Combo_Longitud_Max_Profile.isEnabled()
+            if lat_min_enabled and lat_max_enabled:
+                if lat_min >= lat_max:
+                    QMessageBox.warning(self, "Invalid latitude range",
+                                        "Min latitude must be lower than max latitude")
+                    return
+            if lon_min_enabled and lon_max_enabled:
+                if lon_min >= lon_max:
+                    QMessageBox.warning(self, "Invalid longitude range",
+                                        "Min longitude must be lower than max longitude")
+                    return
 
         if "latitude" in da.dims:
             if "Latitude" in (x_axis, y_axis):
@@ -1527,7 +1692,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         if "Variable" in (x_axis, y_axis):
             # Se comprueba que efectivamente quede una dimensión libre únicamente (sin contar variable como dimensión)
             if len(dims_left) != 1:
-                QMessageBox.warning(self, "Profile","For 1D profile you must leave only one free dimension")
+                QMessageBox.warning(self, "Profile","You must select at least one variable to display. Please,"
+                                                    "check your Axis and Variables choices")
                 return
             d = dims_left[0]
             coords = da.coords[d].values
@@ -1543,7 +1709,8 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Si ninguno de los ejes es variable, se dibuja superficie 2D
         else:
             if len(dims_left) != 2:
-                QMessageBox.warning(self, "Profile","For 2D profile you must leave two free dimensions")
+                QMessageBox.warning(self, "Profile","You must select at least one variable to display. Please,"
+                                                    "check your Axis and Variables Choices")
                 return
             # Mapeo de etiquetas que aparecen en la GUI a nombres de coordenadas
             gui2dim = {"Local Time": "Time", "Altitude": "altitude","Latitude": "latitude", "Longitude": "longitude"}
@@ -1555,7 +1722,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             xs = arr.coords[xdim].values
             ys = arr.coords[ydim].values
             zs = arr.values
-            mesh = ax.pcolormesh(xs, ys, zs, shading="auto",cmap="inferno",vmin=zs.min(), vmax=zs.max())
+            mesh = ax.pcolormesh(xs, ys, zs, shading="auto", cmap="inferno", vmin=zs.min(), vmax=zs.max())
             fig.colorbar(mesh, ax=ax).set_label(desc)
             xlabel, ylabel = x_axis, y_axis
 
@@ -1575,6 +1742,62 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         ax.grid(True, linestyle=":")
         plt.tight_layout()
         plt.show()
+
+        self.loadMolaBaseProfile()
+
+    def loadMolaBaseProfile(self):
+        Processing.initialize()
+
+        prev_id = getattr(self, 'mola_profile_layer_id', None)
+        if prev_id:
+            lyr = QgsProject.instance().mapLayer(prev_id)
+            if lyr:
+                QgsProject.instance().removeMapLayer(prev_id)
+        self.mola_profile_layer_id = None
+
+        plugin_dir = os.path.dirname(__file__)
+        origen = os.path.join(plugin_dir, "mola32_isolines.tif")
+
+        mola_ds = gdal.OpenEx(origen, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"])
+        if mola_ds:
+            srs = osr.SpatialReference()
+            srs.SetFromUserInput("IAU_2015:49900")
+            srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            mola_ds.SetProjection(srs.ExportToWkt())
+            mola_ds = None
+
+        max_lon_mcd = 174.375
+        tmp_tif = os.path.join(tempfile.gettempdir(), "mola_crop_full_profile.tif")
+        opts = gdal.TranslateOptions(format="GTiff", projWin=[-180, 90, max_lon_mcd, -90])
+        gdal.Translate(tmp_tif, origen, options=opts)
+        raster_path = tmp_tif
+
+        ds = gdal.Open(raster_path)
+        gt = ds.GetGeoTransform()
+        down_tif = os.path.join(tempfile.gettempdir(), "mola_down_profile.tif")
+        gdal.Warp(down_tif, ds, xRes=gt[1] * 4, yRes=abs(gt[5]) * 4, resampleAlg='bilinear')
+        ds = None
+        raster_path = down_tif
+
+        shp_path = os.path.join(tempfile.gettempdir(), f"mola_contours_profile_{uuid.uuid4().hex}.shp")
+        for ext in ("shp", "shx", "dbf", "prj"):
+            try:
+                os.remove(shp_path[:-3] + ext)
+            except OSError:
+                pass
+
+        params = {'INPUT': raster_path, 'BAND': 1, 'INTERVAL': 1000.0, 'FIELD_NAME': 'ELEV', 'OUTPUT': shp_path}
+        result = processing.run("gdal:contour", params)
+        if 'OUTPUT' not in result or not result['OUTPUT']:
+            QMessageBox.critical(self, "Error", "gdal:contour failed without exit (Profile).")
+            return
+
+        cont_layer = QgsVectorLayer(result['OUTPUT'], "MOLA Isolines Profile Tool", "ogr")
+        if not cont_layer.isValid():
+            QMessageBox.critical(self, "Error", "MOLA isolines (Profile) could not be created.")
+            return
+
+
 
     def closeEvent(self, event):
         #Emit signal and accept close event when plugin is closed
