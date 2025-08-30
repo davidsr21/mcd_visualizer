@@ -8,7 +8,7 @@ import processing
 import matplotlib.pyplot as plt
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal, Qt
-from qgis.core import QgsProject,QgsRasterLayer,QgsSingleBandPseudoColorRenderer,QgsStyle,Qgis, QgsVectorLayer
+from qgis.core import QgsProject,QgsRasterLayer,QgsSingleBandPseudoColorRenderer,QgsStyle,Qgis, QgsVectorLayer, QgsFeature, QgsGeometry, QgsPointXY, QgsLineSymbol, QgsSingleSymbolRenderer
 from osgeo import gdal, osr
 from PyQt5.QtWidgets import QMessageBox, QApplication, QDialog, QDialogButtonBox, QProgressDialog
 from qgis.utils import iface
@@ -798,6 +798,23 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     continue
 
                 display_name = self.variable_descriptions[varname]
+
+                if self.Combo_Hora.isEnabled() and self.Combo_Hora.count() > 0:
+                    display_name += f" | Time: {self.Combo_Hora.currentText()}"
+
+                if "altitude" in self.ds[varname].dims:
+                    if self.alt_raw:
+                        if self.Combo_Altitud.currentText():
+                            display_name += f" | Alt: {self.Combo_Altitud.currentText()}"
+                    else:
+                        if self.Interpolate_Altitude.text():
+                            display_name += f" | Alt: {self.Interpolate_Altitude.text()}"
+
+                if self.Check_Mapa.isChecked():
+                    display_name += f" | Full Map"
+                else:
+                    display_name+= f" | Lat: {lat_min}...{lat_max} | Lon: {lon_min}...{lon_max}"
+
                 self._mostrar_raster(array, lats, lons, varname, display_name)
 
                 dlg.setValue(idx + 1)
@@ -891,7 +908,7 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             return
 
         # Load resulting shapefile as a vector layer
-        cont_layer = QgsVectorLayer(result['OUTPUT'], "MOLA Isolines", "ogr")
+        cont_layer = QgsVectorLayer(result['OUTPUT'], "MOLA Isolines Map Tool", "ogr")
         if not cont_layer.isValid():
             QMessageBox.critical(self, "Error", "MOLA isolines could not be created.")
             return
@@ -1725,6 +1742,62 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         ax.grid(True, linestyle=":")
         plt.tight_layout()
         plt.show()
+
+        self.loadMolaBaseProfile()
+
+    def loadMolaBaseProfile(self):
+        Processing.initialize()
+
+        prev_id = getattr(self, 'mola_profile_layer_id', None)
+        if prev_id:
+            lyr = QgsProject.instance().mapLayer(prev_id)
+            if lyr:
+                QgsProject.instance().removeMapLayer(prev_id)
+        self.mola_profile_layer_id = None
+
+        plugin_dir = os.path.dirname(__file__)
+        origen = os.path.join(plugin_dir, "mola32_isolines.tif")
+
+        mola_ds = gdal.OpenEx(origen, gdal.OF_RASTER | gdal.OF_UPDATE, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"])
+        if mola_ds:
+            srs = osr.SpatialReference()
+            srs.SetFromUserInput("IAU_2015:49900")
+            srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+            mola_ds.SetProjection(srs.ExportToWkt())
+            mola_ds = None
+
+        max_lon_mcd = 174.375
+        tmp_tif = os.path.join(tempfile.gettempdir(), "mola_crop_full_profile.tif")
+        opts = gdal.TranslateOptions(format="GTiff", projWin=[-180, 90, max_lon_mcd, -90])
+        gdal.Translate(tmp_tif, origen, options=opts)
+        raster_path = tmp_tif
+
+        ds = gdal.Open(raster_path)
+        gt = ds.GetGeoTransform()
+        down_tif = os.path.join(tempfile.gettempdir(), "mola_down_profile.tif")
+        gdal.Warp(down_tif, ds, xRes=gt[1] * 4, yRes=abs(gt[5]) * 4, resampleAlg='bilinear')
+        ds = None
+        raster_path = down_tif
+
+        shp_path = os.path.join(tempfile.gettempdir(), f"mola_contours_profile_{uuid.uuid4().hex}.shp")
+        for ext in ("shp", "shx", "dbf", "prj"):
+            try:
+                os.remove(shp_path[:-3] + ext)
+            except OSError:
+                pass
+
+        params = {'INPUT': raster_path, 'BAND': 1, 'INTERVAL': 1000.0, 'FIELD_NAME': 'ELEV', 'OUTPUT': shp_path}
+        result = processing.run("gdal:contour", params)
+        if 'OUTPUT' not in result or not result['OUTPUT']:
+            QMessageBox.critical(self, "Error", "gdal:contour failed without exit (Profile).")
+            return
+
+        cont_layer = QgsVectorLayer(result['OUTPUT'], "MOLA Isolines Profile Tool", "ogr")
+        if not cont_layer.isValid():
+            QMessageBox.critical(self, "Error", "MOLA isolines (Profile) could not be created.")
+            return
+
+
 
     def closeEvent(self, event):
         #Emit signal and accept close event when plugin is closed

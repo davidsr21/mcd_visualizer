@@ -52,11 +52,11 @@
      </font>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="Map_Tool">
      <attribute name="title">
-      <string>Raster Tool</string>
+      <string>Map Tool</string>
      </attribute>
      <widget class="QPushButton" name="Push_Reset">
       <property name="geometry">
@@ -103,7 +103,7 @@
      <widget class="QLabel" name="Label_Archivo">
       <property name="geometry">
        <rect>
-        <x>270</x>
+        <x>280</x>
         <y>60</y>
         <width>81</width>
         <height>20</height>
@@ -119,7 +119,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Data File</string>
+       <string>Month</string>
       </property>
      </widget>
      <widget class="QLabel" name="Label_Epoca">
@@ -761,7 +761,7 @@
      <widget class="QLabel" name="Label_Archivo_2">
       <property name="geometry">
        <rect>
-        <x>270</x>
+        <x>280</x>
         <y>60</y>
         <width>81</width>
         <height>20</height>
@@ -777,7 +777,7 @@
        </font>
       </property>
       <property name="text">
-       <string>Data File</string>
+       <string>Month</string>
       </property>
      </widget>
      <widget class="QPushButton" name="Push_Reset_Profile">
