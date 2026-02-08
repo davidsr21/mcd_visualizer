@@ -13,13 +13,16 @@ from osgeo import gdal, osr
 from PyQt5.QtWidgets import QMessageBox, QApplication, QDialog, QDialogButtonBox, QProgressDialog
 from qgis.utils import iface
 from qgis.PyQt.QtGui import QColor
-import xarray as xr
+from qgis.core import QgsSettings
 import numpy as np
 from processing.core.Processing import Processing
 from .interp_config_dialog import InterpConfigDialog
 from .interp_config_dialog_profile import InterpConfigDialogProfile
-
-
+try:
+    import xarray as xr
+    import netCDF4
+except ImportError:
+    xr = None
 
 # Carga de la UI principal generada con Qt Designer
 FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'mcd_visualizer_dockwidget_base_profiles.ui'))
@@ -60,7 +63,39 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         self.lon_step_profile = "2"
 
         # Ruta base donde se almacenan los NetCDF
-        self.ruta = r"C:\MCD6.1\data" # Cadena cruda con la ruta absoluta
+        # --- DYNAMIC PATH MANAGEMENT ---
+        # 1. Check if libraries loaded correctly above
+        if xr is None:
+            QMessageBox.critical(self, "Missing Libraries",
+                                 "CRITICAL: 'xarray' and 'netCDF4' are missing.\n"
+                                 "Please install them via OSGeo4W Shell: 'pip install xarray netCDF4'")
+            self.ruta = ""  # Set empty path to avoid crashes
+
+        else:
+            # 2. Try to retrieve previously saved path
+            self.settings = QgsSettings()
+            saved_path = self.settings.value("mcd_visualizer/data_path", "", type=str)
+
+            # Verify if saved path is valid (checking for a key folder like 'clim_aveEUV')
+            if saved_path and os.path.exists(os.path.join(saved_path, "clim_aveEUV")):
+                self.ruta = saved_path
+            else:
+                # 3. If not exists or invalid, ask the user
+                QMessageBox.information(self, "MCD Data Required",
+                                        "Please select your local MCD 'data' folder.\n"
+                                        "(It must contain ALL subfolders listed in the README file.)")
+
+                new_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select MCD data folder")
+
+                # Validate user selection
+                if new_path and os.path.exists(os.path.join(new_path, "clim_aveEUV")):
+                    self.ruta = new_path
+                    self.settings.setValue("mcd_visualizer/data_path", new_path)  # Save permanently
+                else:
+                    self.ruta = ""  # User cancelled or selected wrong folder
+                    if new_path:  # Only show error if they actually selected something
+                        QMessageBox.warning(self, "Error", "Invalid folder. MCD data not found.")
+        # --------------------------------
         # Diccionario que mapea nombre legible → Nombre carpeta
         self.lista_carpetas = {
             "Yearly Average": "clim_aveEUV",

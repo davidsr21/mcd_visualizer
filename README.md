@@ -44,7 +44,7 @@ Open your **OSGeo4W Shell** (Windows) or Terminal (Mac/Linux) and run:
 pip install xarray netCDF4
 
 ## Features
-*   **Map Tool:** Visualize atmospheric variables (Temperature, Pressure, Wind, etc.) on a 2D map with spatial interpolation.
+*   **Map Tool:** Visualize atmospheric variables (Temperature, Pressure, Wind, etc.) on a 2D map with spatial interpolation option.
 *   **Profile Tool:** Generate vertical profiles, temporal evolution charts, and 2D cross-sections.
 *   **Customization:** Toggle between "Raw Data" (exact grid points) and "Interpolated" modes for smoother visualization.
 *   **MOLA Integration:** Automatically overlays MOLA topography isolines for context.
