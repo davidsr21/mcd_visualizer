@@ -1,9 +1,8 @@
-
 [general]
 name=MCD_Visualizer
 qgisMinimumVersion=3.10
 description=Mars Climate Database (MCD) visualizer in QGIS
-version=0.1
+version=0.2
 author=David Sánchez
 email=david.sanchezruiz@edu.uah.es
 license=GNU GPLv3
@@ -11,9 +10,7 @@ license_file=LICENSE
 
 about=<h3>MCD Visualizer for QGIS</h3>
     <p>This plugin allows you to visualize NetCDF data from the LMD Mars Climate Database (MCD) directly in QGIS. Features include 2D Map interpolation, vertical profiles, and temporal evolution analysis.</p>
-    
     <p><b>⚠️ CRITICAL REQUIREMENTS (READ BEFORE INSTALLING):</b></p>
-    
     <p><b>1. External Data Path:</b></p>
     <p>Due to license restrictions, this plugin <b>DOES NOT include the MCD data</b>. You must have a local copy of the Mars Climate Database (v5 or v6).</p>
     <p>On the first run, you must point the plugin to your local <b>'data'</b> folder. This folder MUST contain ALL the following subdirectories:</p>
@@ -21,7 +18,6 @@ about=<h3>MCD Visualizer for QGIS</h3>
         <li><b>Scenarios:</b> <code>clim_aveEUV</code>, <code>cold</code>, <code>warm</code>, <code>strm</code></li>
         <li><b>Martian Years:</b> <code>MY24</code>, <code>MY25</code>, <code>MY26</code>, <code>MY27</code>, <code>MY28</code>, <code>MY29</code>, <code>MY30</code>, <code>MY31</code>, <code>MY32</code>, <code>MY33</code>, <code>MY34</code>, <code>MY35</code></li>
     </ul>
-    
     <p><b>2. Python Libraries:</b></p>
     <p>This plugin requires <b>xarray</b> and <b>netCDF4</b>. Install them via OSGeo4W Shell (Windows) or Terminal:</p>
     <p><code>pip install xarray netCDF4</code></p>
@@ -31,7 +27,6 @@ tracker=https://github.com/davidsr21/mcd_visualizer/issues
 repository=https://github.com/davidsr21/mcd_visualizer
 homepage=https://github.com/davidsr21/mcd_visualizer
 
-# Recommended items:
 hasProcessingProvider=no
 tags=python, mars, planetary, climate, atmosphere, netcdf, meteorology, mcd
 category=Plugins

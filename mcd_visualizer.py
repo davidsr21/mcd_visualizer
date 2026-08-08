@@ -21,15 +21,25 @@
  *                                                                         *
  ***************************************************************************/
 """
+import os
+import os.path
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import QAction
+from qgis.PyQt.QtWidgets import QAction, QMessageBox, QFileDialog
+from qgis.core import QgsSettings
+
 # Initialize Qt resources from file resources.py
 from .resources import *
 
 # Import the code for the DockWidget
 from .mcd_visualizer_dockwidget import MCDVisualizerDockWidget
-import os.path
+
+# Check if mandatory libraries are installed
+try:
+    import xarray as xr
+    import netCDF4
+except ImportError:
+    xr = None
 
 
 class MCDVisualizer:
@@ -68,25 +78,12 @@ class MCDVisualizer:
         self.toolbar = self.iface.addToolBar(u'MCDVisualizer')
         self.toolbar.setObjectName(u'MCDVisualizer')
 
-        #print "** INITIALIZING MCDVisualizer"
-
         self.pluginIsActive = False
         self.dockwidget = None
 
 
-    # noinspection PyMethodMayBeStatic
     def tr(self, message):
-        """Get the translation for a string using Qt translation API.
-
-        We implement this ourselves since we do not inherit QObject.
-
-        :param message: String for translation.
-        :type message: str, QString
-
-        :returns: Translated version of message.
-        :rtype: QString
-        """
-        # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
+        """Get the translation for a string using Qt translation API."""
         return QCoreApplication.translate('MCDVisualizer', message)
 
 
@@ -101,44 +98,7 @@ class MCDVisualizer:
         status_tip=None,
         whats_this=None,
         parent=None):
-        """Add a toolbar icon to the toolbar.
-
-        :param icon_path: Path to the icon for this action. Can be a resource
-            path (e.g. ':/plugins/foo/bar.png') or a normal file system path.
-        :type icon_path: str
-
-        :param text: Text that should be shown in menu items for this action.
-        :type text: str
-
-        :param callback: Function to be called when the action is triggered.
-        :type callback: function
-
-        :param enabled_flag: A flag indicating if the action should be enabled
-            by default. Defaults to True.
-        :type enabled_flag: bool
-
-        :param add_to_menu: Flag indicating whether the action should also
-            be added to the menu. Defaults to True.
-        :type add_to_menu: bool
-
-        :param add_to_toolbar: Flag indicating whether the action should also
-            be added to the toolbar. Defaults to True.
-        :type add_to_toolbar: bool
-
-        :param status_tip: Optional text to show in a popup when mouse pointer
-            hovers over the action.
-        :type status_tip: str
-
-        :param parent: Parent widget for the new action. Defaults None.
-        :type parent: QWidget
-
-        :param whats_this: Optional text to show in the status bar when the
-            mouse pointer hovers over the action.
-
-        :returns: The action that was created. Note that the action is also
-            added to self.actions list.
-        :rtype: QAction
-        """
+        """Add a toolbar icon to the toolbar."""
 
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
@@ -174,59 +134,101 @@ class MCDVisualizer:
             callback=self.run,
             parent=self.iface.mainWindow())
 
-    #--------------------------------------------------------------------------
 
     def onClosePlugin(self):
         """Cleanup necessary items here when plugin dockwidget is closed"""
 
-        #print "** CLOSING MCDVisualizer"
-
-        # disconnects
         self.dockwidget.closingPlugin.disconnect(self.onClosePlugin)
-
-        # remove this statement if dockwidget is to remain
-        # for reuse if plugin is reopened
-        # Commented next statement since it causes QGIS crashe
-        # when closing the docked window:
-        # self.dockwidget = None
-
         self.pluginIsActive = False
 
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
 
-        #print "** UNLOAD MCDVisualizer"
-
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&MCD_Visualizer'),
                 action)
             self.iface.removeToolBarIcon(action)
-        # remove the toolbar
         del self.toolbar
 
-    #--------------------------------------------------------------------------
 
     def run(self):
         """Run method that loads and starts the plugin"""
 
+        # ====================================================================
+        # 1. DYNAMIC PATH MANAGEMENT & LIBRARIES CHECK
+        # ====================================================================
+        if xr is None:
+            QMessageBox.critical(
+                self.iface.mainWindow(),
+                "Missing Libraries",
+                "CRITICAL: 'xarray' and 'netCDF4' are missing.\n"
+                "Please install them via OSGeo4W Shell: 'pip install xarray netCDF4'"
+            )
+            return
+
+        settings = QgsSettings()
+        ruta = settings.value("mcd_visualizer/data_path", "", type=str)
+
+        while True:
+            # Check if saved path is valid and contains essential subdirectories
+            if (ruta and
+                    os.path.exists(os.path.join(ruta, "clim_aveEUV")) and
+                    os.path.exists(os.path.join(ruta, "MY24"))):
+                settings.setValue("mcd_visualizer/data_path", ruta)
+                break
+
+            if ruta != "":
+                QMessageBox.warning(
+                    self.iface.mainWindow(),
+                    "Invalid Path",
+                    f"MCD database not found in:\n{ruta}\n\n"
+                    "Please select the correct 'data' folder containing 'clim_aveEUV', 'MY24', etc."
+                )
+            else:
+                QMessageBox.information(
+                    self.iface.mainWindow(),
+                    "Initial Setup",
+                    "Please select your local MCD 'data' folder.\n"
+                    "(It must contain ALL subfolders listed in the instructions)."
+                )
+
+            new_path = QFileDialog.getExistingDirectory(
+                self.iface.mainWindow(),
+                "Select MCD 'data' folder"
+            )
+
+            if not new_path:
+                settings.remove("mcd_visualizer/data_path")
+                QMessageBox.critical(
+                    self.iface.mainWindow(),
+                    "No Data Provided",
+                    "No folder selected. MCD Visualizer will close as it cannot load data."
+                )
+                self.pluginIsActive = False
+                return  # Abort run(), do NOT open the dockwidget
+
+            ruta = new_path
+
+        # ====================================================================
+        # 2. DOCKWIDGET CREATION AND DISPLAY
+        # ====================================================================
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            #print "** STARTING MCDVisualizer"
+            # Create dockwidget passing the validated 'ruta'
+            if self.dockwidget is None:
+                self.dockwidget = MCDVisualizerDockWidget(ruta)
+            else:
+                self.dockwidget.ruta = ruta  # Update path in case it changed
 
-            # dockwidget may not exist if:
-            #    first run of plugin
-            #    removed on close (see self.onClosePlugin method)
-            if self.dockwidget == None:
-                # Create the dockwidget (after translation) and keep reference
-                self.dockwidget = MCDVisualizerDockWidget()
-
-            # connect to provide cleanup on closing of dockwidget
+            # Connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
-            # show the dockwidget
-            # TODO: fix to allow choice of dock location
+            # Show the dockwidget
             self.iface.addDockWidget(Qt.LeftDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
+        else:
+            self.dockwidget.hide()
+            self.pluginIsActive = False

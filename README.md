@@ -7,7 +7,7 @@
 Due to license restrictions and file size, **this plugin does NOT include the MCD data**. 
 
 ### 1. Data Requirements (Mandatory)
-You must have a local copy of the full Mars Climate Database (v5 or v6). On the first run, the plugin will ask you to select your local `data` folder.
+You must have a local copy of the full Mars Climate Database (v5 or v6). On the first run, the plugin will launch an interactive setup dialog asking you to select your local `data` folder.
 
 **Your `data` folder MUST contain ALL the following subdirectories:**
 
@@ -31,17 +31,16 @@ You must have a local copy of the full Mars Climate Database (v5 or v6). On the 
 *   `MY34`
 *   `MY35`
 
-> **Note:** If you select a folder that is missing any of these subdirectories, the plugin may not function correctly.
+> **Note on Folder Validation:** The plugin automatically verifies that required subdirectories exist. If you select an invalid folder, the plugin will warn you and ask you to select the correct location. If you cancel the folder selection, the plugin will safely close without crashing and will prompt you again the next time you open it.
 
-### 2. Software Requirements
-This plugin requires external Python libraries not included in standard QGIS installations:
-*   `xarray`
-*   `netCDF4`
+### 2. Software Requirements (Python Libraries)
+This plugin requires two external Python libraries not included in standard QGIS installations: `xarray` and `netCDF4`.
 
 **How to install them:**
-Open your **OSGeo4W Shell** (Windows) or Terminal (Mac/Linux) and run:
-```bash
-pip install xarray netCDF4
+*   **In Windows:** Open the **OSGeo4W Shell** (you can find it by searching in your Windows Start menu). In the black window that opens, type exactly the following command and press Enter:
+    `pip install xarray netCDF4`
+*   **In Mac/Linux:** Open your Terminal, type the same command and press Enter:
+    `pip install xarray netCDF4`
 
 ## Features
 *   **Map Tool:** Visualize atmospheric variables (Temperature, Pressure, Wind, etc.) on a 2D map with spatial interpolation option.
@@ -50,11 +49,17 @@ pip install xarray netCDF4
 *   **MOLA Integration:** Automatically overlays MOLA topography isolines for context.
 
 ## Installation
+
 1.  Open QGIS.
 2.  Go to **Plugins > Manage and Install Plugins**.
-3.  Search for **"MCD Visualizer"**.
-4.  Install the plugin.
-5.  On first launch, follow the prompt to select your MCD `data` folder.
+3.  Go to the **Settings** tab and check the box **"Show also experimental plugins"**.
+4.  Go back to the **All** tab and search for **"MCD Visualizer"**.
+5.  Click on **Install Plugin**.
+6.  On first launch, follow the interactive prompt to select your MCD `data` folder.
+
+> **Troubleshooting:** 
+> * **Data Folder Prompt:** If you ever move your MCD data folder or cancel the initial setup, simply click the MCD Visualizer icon again to launch the folder setup dialog.
+> * **Installation Fatal Error:** If you receive a "Fatal Error" during installation mentioning `dataclasses`, it is caused by a conflict with another third-party plugin called **qpip**. To solve this: go to your Installed plugins tab, temporarily uncheck "qpip", install MCD Visualizer, and then re-check "qpip".
 
 ## License
 This plugin is released under the GNU General Public License (GPL) version 2 or later.

@@ -31,9 +31,11 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(os.path.dirname(__file__), 'mcd_visu
 class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
     closingPlugin = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, ruta, parent=None):
         super(MCDVisualizerDockWidget, self).__init__(parent)
         self.setupUi(self) # Monta widgets y layouts definidos en el .ui
+
+        self.ruta = ruta
 
         osr.DontUseExceptions() #Silencia avisos al usar IAU 49900 como CSR, ademas de mantener modo sin excepciones
 
@@ -61,40 +63,6 @@ class MCDVisualizerDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         self.lon_raw_profile = True
         self.lon_step_profile = "2"
-
-        # Ruta base donde se almacenan los NetCDF
-        # --- DYNAMIC PATH MANAGEMENT ---
-        # 1. Check if libraries loaded correctly above
-        if xr is None:
-            QMessageBox.critical(self, "Missing Libraries",
-                                 "CRITICAL: 'xarray' and 'netCDF4' are missing.\n"
-                                 "Please install them via OSGeo4W Shell: 'pip install xarray netCDF4'")
-            self.ruta = ""  # Set empty path to avoid crashes
-
-        else:
-            # 2. Try to retrieve previously saved path
-            self.settings = QgsSettings()
-            saved_path = self.settings.value("mcd_visualizer/data_path", "", type=str)
-
-            # Verify if saved path is valid (checking for a key folder like 'clim_aveEUV')
-            if saved_path and os.path.exists(os.path.join(saved_path, "clim_aveEUV")):
-                self.ruta = saved_path
-            else:
-                # 3. If not exists or invalid, ask the user
-                QMessageBox.information(self, "MCD Data Required",
-                                        "Please select your local MCD 'data' folder.\n"
-                                        "(It must contain ALL subfolders listed in the README file.)")
-
-                new_path = QtWidgets.QFileDialog.getExistingDirectory(self, "Select MCD data folder")
-
-                # Validate user selection
-                if new_path and os.path.exists(os.path.join(new_path, "clim_aveEUV")):
-                    self.ruta = new_path
-                    self.settings.setValue("mcd_visualizer/data_path", new_path)  # Save permanently
-                else:
-                    self.ruta = ""  # User cancelled or selected wrong folder
-                    if new_path:  # Only show error if they actually selected something
-                        QMessageBox.warning(self, "Error", "Invalid folder. MCD data not found.")
         # --------------------------------
         # Diccionario que mapea nombre legible → Nombre carpeta
         self.lista_carpetas = {
